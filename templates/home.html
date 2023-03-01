@@ -1,0 +1,40 @@
+<html>
+    {% if b %}
+    <h1>Login to start</h1>
+    <form method="POST">
+        username: <input type="text" name ="username">
+        <br>
+        password: <input type="password" name="password">
+        <br>
+        <input type="submit" value="login">
+        <input type="hidden"name="buttonType" value="loginForm">
+    </form>
+    {% endif %}
+
+    {% if a %}
+        <form method="POST">
+            <input type="submit" value="Table One" onsubmit="checkFull()">
+            <input type="hidden" id = "tableOne" name="buttonType" value="table">
+        </form>
+    {% endif %}
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf-8">
+        var socket = io();
+        socket.on('connect', function(){
+            console.log("CONNECTED!")
+            socket.emit('con', {data: 'I\'m connected!'})
+    
+        });
+
+        function checkfull(){
+            console.log("checkfull")
+            location.reload()
+        }
+
+        const tableOne = document.getElementById("tableOne")
+        socket.on('diableTable', function(){
+            tableOne.disabled=true
+        })
+    </script>
+</html>

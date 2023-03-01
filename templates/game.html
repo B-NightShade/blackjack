@@ -1,0 +1,44 @@
+<html>
+<h1>{{ user.username }} Cards!</h1>
+<p>Your cash: {{ user.cash }}</p>
+{% if betting %}
+<form method="POST" id = "betForm">
+    <input type ="number" max = "{{user.cash}}" name = "bet">
+    <input type="hidden" name ="id" value="{{ user.id }}">
+    <input type = "submit" value = "Make bet">
+</form>
+{% else %}
+{% for card in yourHand %}
+ <img src={{card}} width ="100px">
+{% endfor %}
+
+<hr>
+<h1>Oponents Cards!</h1>
+{% for hand in others %}
+    {% for card in hand %}
+        <img src={{card}} width ="100px">
+    {% endfor %}
+<hr>
+{% endfor %}
+<hr>
+<h1>Dealer Cards</h1>
+{% for card in dealers %}
+<img src={{card}} width ="100px">
+{% endfor %}
+
+{% endif %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+<script type="text/javascript" charset="utf-8">
+    var socket = io();
+    socket.on('connect', function(){
+        console.log("CONNECTED!")
+        socket.emit('addPlayer')
+    });
+
+    socket.on("reload", function(){
+        socket.emit("dealOne")
+        location.reload()
+    })
+    </script>
+</html>
