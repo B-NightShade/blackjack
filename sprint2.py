@@ -88,6 +88,7 @@ def getVal(symbol):
     return int(value)
 
 def deal(players):
+    global dealt
     print("dealing")
     for player in players:
         currentCard = deck.pop()
@@ -129,9 +130,11 @@ def deal(players):
     hand.dealerId = 1;
     db.session.add(hand)
     db.session.commit()
+    dealt = True
 
 connected = 0
 reloadFirstDeal = False
+dealt = False
 
 @app.route('/', methods=['GET','POST'])
 def home():
@@ -162,6 +165,7 @@ def game():
     #set playing to true
     global user
     global reloadFirstDeal
+    global dealt
     betting = True
     if request.method == "POST":
         userid = request.form["id"]
@@ -170,7 +174,7 @@ def game():
         numberPlaying = User.query.filter_by(playing=1).count()
         numberBet = User.query.filter_by(bet=1).count()
         if (numberPlaying == numberBet):
-            if (reloadFirstDeal == False):
+            if (reloadFirstDeal == False and dealt == False):
                 print("ready to deal")
                 playing =  User.query.filter_by(playing=1)
                 deal(playing)
@@ -202,12 +206,14 @@ def game():
                 if(player.id != user.id):
                     hand =  Hands.query.filter_by(userId= player.id).first()
                     card = Card.query.filter_by(card_id = hand.cardOne).first()
-                    #card2 = Card.query.filter_by(card_id = hand.cardTwo).first()
+                    card2 = Card.query.filter_by(card_id = hand.cardTwo).first()
                     cards.append(card.image)
-                    #cards.append(card2.image)
-                    others.append(cards)
+                    cards.append(card2.image)
+                    cardsCopy = cards.copy()
+                    others.append(cardsCopy)
                     cards.clear()
-            print(others)
+                    print(others)
+            #print(others)
             return render_template("game.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting)
     User.query.filter_by(id=user.id).update({'playing':1})
     db.session.commit()
@@ -244,5 +250,5 @@ def reloadOnce():
 
 if __name__ == '__main__':
     #app.run()
-    serve(app, port=5000, threads=8)
+    serve(app, port=5000, threads=15)
    
