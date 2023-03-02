@@ -11,9 +11,13 @@
 {% for card in yourHand %}
  <img src={{card}} width ="100px">
 {% endfor %}
+<br>
+<button type = "button">Hit</button>
+<button type = "button">Stay</button>
+<button type = "button">Split</button>
 
 <hr>
-<h1>Oponents Cards!</h1>
+<h1>Opponents' Cards!</h1>
 {% for hand in others %}
     {% for card in hand %}
         <img src={{card}} width ="100px">
