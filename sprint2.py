@@ -90,6 +90,7 @@ def getVal(symbol):
 def deal(players):
     print("dealing")
     for player in players:
+        #each player gets cards
         currentCard = deck.pop()
         cardSplit = currentCard.split(" of ")
         val = cardSplit[0]
@@ -110,6 +111,7 @@ def deal(players):
         hand.userId = player.id;
         db.session.add(hand)
         db.session.commit()
+    #dealer
     hand = Hands()
     currentCard = deck.pop()
     cardSplit = currentCard.split(" of ")
@@ -212,6 +214,36 @@ def game():
     User.query.filter_by(id=user.id).update({'playing':1})
     db.session.commit()
     return render_template("game.html", user = user, betting = betting)
+def hit(players):
+    for player in players:
+        currentCard = deck.pop()
+        cardSplit = currentCard.split(" of ")
+        val = cardSplit[0]
+        symbol = cardSplit[1]
+        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        card.dealt = 1
+        hand = Hands()
+        hand.cardOne = card.card_id
+
+def faceCompare(symbolOne, symbolTwo):
+    if symbolOne == "jack" & symbolTwo == "jack":
+        return True
+    if symbolOne == "queen" & symbolTwo == "queen":
+        return True
+    if symbolOne == "king" & symbolTwo == "king":
+        return True
+    if symbolOne == "10" & symbolTwo == "10":
+        return True
+def split(player):
+    cardOne = Card.query.filter_by(card_id = player.cardOne).first().symbol()
+    cardTwo = Card.query.filter_by(card_id = player.cardTwo).first().symbol()
+    if cardOne.getVal() == cardTwo.getVal():
+        if cardOne.getVal() ==10:
+            actualSame = faceCompare(cardOne, cardTwo)
+            #if actualSame==True:
+        #else:
+
+
 
 
 @app.route('/logout')
