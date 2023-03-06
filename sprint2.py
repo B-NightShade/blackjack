@@ -7,7 +7,7 @@ This is a temporary script file.
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from waitress import serve
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, join_room, leave_room
 from flask_login import LoginManager, UserMixin, login_user, \
     logout_user, current_user, login_required
 import random
@@ -45,6 +45,7 @@ class User(UserMixin, db.Model):
     playing = db.Column(db.Integer)
     bet = db.Column(db.Integer)
     session = db.Column(db.String(100))
+    bust = db.Column(db.Integer)
 
 
 class Hands(db.Model):
@@ -56,6 +57,7 @@ class Hands(db.Model):
     cardThree = db.Column(db.Integer)
     cardFour = db.Column(db.Integer)
     cardFive = db.Column(db.Integer)
+    value = db.Column(db.Integer)
     
   
 user = User()
@@ -132,9 +134,11 @@ def deal(players):
     db.session.commit()
     dealt = True
 
+
 connected = 0
 reloadFirstDeal = False
 dealt = False
+index = 0
 
 @app.route('/', methods=['GET','POST'])
 def home():
@@ -166,9 +170,11 @@ def game():
     global user
     global reloadFirstDeal
     global dealt
+    global index
     betting = True
     if request.method == "POST":
-        userid = request.form["id"]
+        userid = current_user.id
+        user = User.query.filter_by(id=userid).first()
         User.query.filter_by(id=userid).update({'bet':1})
         db.session.commit()
         numberPlaying = User.query.filter_by(playing=1).count()
@@ -212,8 +218,6 @@ def game():
                     cardsCopy = cards.copy()
                     others.append(cardsCopy)
                     cards.clear()
-                    print(others)
-            #print(others)
             return render_template("game.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting)
     User.query.filter_by(id=user.id).update({'playing':1})
     db.session.commit()
@@ -227,6 +231,7 @@ def logout():
     return redirect(url_for('home'))
 
 
+
 @socketio.on('con')
 def handle_connection(data):
     print(data['data'])
@@ -235,7 +240,25 @@ def handle_connection(data):
 def handle_player():
     global connected
     global user
+    print("connected to game")
+    print(request.sid)
+    User.query.filter_by(id=user.id).update({'session':request.sid})
+    room = request.sid
+    join_room(room)
+    db.session.commit()
     connected += 1
+
+#disconnect set playing to 0 remove their hand set bet to 0 session to 0
+
+@socketio.on("test")
+def handle_test():
+    playing =  User.query.filter_by(playing=1)
+    sessionIds=[]
+    for player in playing:
+        sessionIds.append(player.session)
+    socketio.emit("activate", to=sessionIds[index])
+    ##print(sessionIds[index])
+    ##print("on submit??")
 
 @socketio.on("checkTableSize")
 def checkTable():
@@ -246,6 +269,14 @@ def checkTable():
 def reloadOnce():
     global reloadFirstDeal 
     reloadFirstDeal = True
+
+    
+@socketio.on('disconnect')
+def handle_disconnect():
+    global index
+    room = request.sid
+    leave_room(room)
+    ##print(sessionIds)
 
 
 if __name__ == '__main__':
