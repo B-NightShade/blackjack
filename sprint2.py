@@ -33,7 +33,6 @@ class Card(db.Model):
     dealt = db.Column(db.Integer)
     image = db.Column(db.String(100))
     back = db.Column(db.String(100))
-
   
 
 class User(UserMixin, db.Model):
@@ -42,6 +41,8 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(100))
     bet = db.Column(db.Integer)
     cash = db.Column(db.Integer)
+    handid = db.Column(db.Integer)
+    splitHand = db.Column(db.Integer)
     playing = db.Column(db.Integer)
     bet = db.Column(db.Integer)
     session = db.Column(db.String(100))
@@ -58,8 +59,7 @@ class Hands(db.Model):
     cardFour = db.Column(db.Integer)
     cardFive = db.Column(db.Integer)
     value = db.Column(db.Integer)
-    
-  
+     
 user = User()
 
 @login_manager.user_loader
