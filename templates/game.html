@@ -1,19 +1,23 @@
 <html>
-<h1>{{ user.username }} Cards!</h1>
-<p>Your cash: {{ user.cash }}</p>
+<h1>{{ current_user.username }} Cards!</h1>
+<p>Your cash: {{ current_user.cash }}</p>
 {% if betting %}
-<form method="POST" id = "betForm">
+<form method="POST" id = "betForm" onsubmit="playerOne()">
     <input type ="number" max = "{{user.cash}}" name = "bet">
-    <input type="hidden" name ="id" value="{{ user.id }}">
+    <input type="hidden" name ="id" value="{{ user.session }}">
     <input type = "submit" value = "Make bet">
 </form>
 {% else %}
 {% for card in yourHand %}
  <img src={{card}} width ="100px">
 {% endfor %}
+<br>
+<button type = "button" disabled="true" id="hitButton">Hit</button>
+<button type = "button" disabled="true" id="stayButton">Stay</button>
+<button type = "button" disabled="true" id="splitButton">Split</button>
 
 <hr>
-<h1>Oponents Cards!</h1>
+<h1>Opponents' Cards!</h1>
 {% for hand in others %}
     {% for card in hand %}
         <img src={{card}} width ="100px">
@@ -39,6 +43,21 @@
     socket.on("reload", function(){
         socket.emit("dealOne")
         location.reload()
+    })
+
+    const hitButton = document.getElementById("hitButton")
+    const stayButton = document.getElementById("stayButton")
+    const splitButton = document.getElementById("splitButton")
+
+    function playerOne(){
+        var form = document.getElementById("betForm")
+        form.style.display = "none";
+    }
+
+    socket.on("activate", function(){
+        hitButton.disabled = false
+        stayButton.disabled = false
+        splitButton.disabled=false
     })
     </script>
 </html>

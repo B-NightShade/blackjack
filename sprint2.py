@@ -7,7 +7,7 @@ This is a temporary script file.
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from waitress import serve
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, join_room, leave_room
 from flask_login import LoginManager, UserMixin, login_user, \
     logout_user, current_user, login_required
 import random
@@ -33,7 +33,6 @@ class Card(db.Model):
     dealt = db.Column(db.Integer)
     image = db.Column(db.String(100))
     back = db.Column(db.String(100))
-
   
 
 class User(UserMixin, db.Model):
@@ -42,9 +41,12 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(100))
     bet = db.Column(db.Integer)
     cash = db.Column(db.Integer)
+    handid = db.Column(db.Integer)
+    splitHand = db.Column(db.Integer)
     playing = db.Column(db.Integer)
     bet = db.Column(db.Integer)
     session = db.Column(db.String(100))
+    bust = db.Column(db.Integer)
 
 
 class Hands(db.Model):
@@ -56,8 +58,8 @@ class Hands(db.Model):
     cardThree = db.Column(db.Integer)
     cardFour = db.Column(db.Integer)
     cardFive = db.Column(db.Integer)
-    
-  
+    value = db.Column(db.Integer)
+     
 user = User()
 
 @login_manager.user_loader
@@ -88,9 +90,9 @@ def getVal(symbol):
     return int(value)
 
 def deal(players):
+    global dealt
     print("dealing")
     for player in players:
-        #each player gets cards
         currentCard = deck.pop()
         cardSplit = currentCard.split(" of ")
         val = cardSplit[0]
@@ -99,6 +101,7 @@ def deal(players):
         card.dealt = 1
         hand = Hands()
         hand.cardOne = card.card_id
+        total = card.value;
         
         currentCard2 = deck.pop()
         cardSplit = currentCard2.split(" of ")
@@ -107,11 +110,14 @@ def deal(players):
         card = Card.query.filter_by(symbol=val, suit=symbol).first()
         card.dealt = 1
         hand.cardTwo = card.card_id
+        total+= card.value;
     
         hand.userId = player.id;
+        hand.value= total;
         db.session.add(hand)
         db.session.commit()
-    #dealer
+        User.query.filter_by(id=player.id).update({'handid':hand.hand_id})
+        db.session.commit()
     hand = Hands()
     currentCard = deck.pop()
     cardSplit = currentCard.split(" of ")
@@ -120,6 +126,7 @@ def deal(players):
     card = Card.query.filter_by(symbol=val, suit=symbol).first()
     card.dealt = 1
     hand.cardOne = card.card_id
+    dealerTotal = card.value;
     
     currentCard2 = deck.pop()
     cardSplit = currentCard2.split(" of ")
@@ -128,12 +135,18 @@ def deal(players):
     card = Card.query.filter_by(symbol=val, suit=symbol).first()
     card.dealt = 1
     hand.cardTwo = card.card_id
+    dealerTotal += card.value;
     hand.dealerId = 1;
+    hand.value = dealerTotal;
     db.session.add(hand)
     db.session.commit()
+    dealt = True
+
 
 connected = 0
 reloadFirstDeal = False
+dealt = False
+index = 0
 
 @app.route('/', methods=['GET','POST'])
 def home():
@@ -164,15 +177,18 @@ def game():
     #set playing to true
     global user
     global reloadFirstDeal
+    global dealt
+    global index
     betting = True
     if request.method == "POST":
-        userid = request.form["id"]
+        userid = current_user.id
+        user = User.query.filter_by(id=userid).first()
         User.query.filter_by(id=userid).update({'bet':1})
         db.session.commit()
         numberPlaying = User.query.filter_by(playing=1).count()
         numberBet = User.query.filter_by(bet=1).count()
         if (numberPlaying == numberBet):
-            if (reloadFirstDeal == False):
+            if (reloadFirstDeal == False and dealt == False):
                 print("ready to deal")
                 playing =  User.query.filter_by(playing=1)
                 deal(playing)
@@ -181,7 +197,8 @@ def game():
             
             betting = False
             yourHand = []
-            Hand = Hands.query.filter_by(userId= user.id).first()
+            user = User.query.filter_by(id=current_user.id).first()
+            Hand = Hands.query.filter_by(hand_id= user.handid).first()
             card = Card.query.filter_by(card_id = Hand.cardOne).first()
             yourHand.append(card.image)
             card = Card.query.filter_by(card_id = Hand.cardTwo).first()
@@ -202,48 +219,18 @@ def game():
             playing =  User.query.filter_by(playing=1)
             for player in playing:
                 if(player.id != user.id):
-                    hand =  Hands.query.filter_by(userId= player.id).first()
+                    hand =  Hands.query.filter_by(hand_id= player.handid).first()
                     card = Card.query.filter_by(card_id = hand.cardOne).first()
-                    #card2 = Card.query.filter_by(card_id = hand.cardTwo).first()
+                    card2 = Card.query.filter_by(card_id = hand.cardTwo).first()
                     cards.append(card.image)
-                    #cards.append(card2.image)
-                    others.append(cards)
+                    cards.append(card2.image)
+                    cardsCopy = cards.copy()
+                    others.append(cardsCopy)
                     cards.clear()
-            print(others)
             return render_template("game.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting)
     User.query.filter_by(id=user.id).update({'playing':1})
     db.session.commit()
     return render_template("game.html", user = user, betting = betting)
-def hit(players):
-    for player in players:
-        currentCard = deck.pop()
-        cardSplit = currentCard.split(" of ")
-        val = cardSplit[0]
-        symbol = cardSplit[1]
-        card = Card.query.filter_by(symbol=val, suit=symbol).first()
-        card.dealt = 1
-        hand = Hands()
-        hand.cardOne = card.card_id
-
-def faceCompare(symbolOne, symbolTwo):
-    if symbolOne == "jack" & symbolTwo == "jack":
-        return True
-    if symbolOne == "queen" & symbolTwo == "queen":
-        return True
-    if symbolOne == "king" & symbolTwo == "king":
-        return True
-    if symbolOne == "10" & symbolTwo == "10":
-        return True
-def split(player):
-    cardOne = Card.query.filter_by(card_id = player.cardOne).first().symbol()
-    cardTwo = Card.query.filter_by(card_id = player.cardTwo).first().symbol()
-    if cardOne.getVal() == cardTwo.getVal():
-        if cardOne.getVal() ==10:
-            actualSame = faceCompare(cardOne, cardTwo)
-            #if actualSame==True:
-        #else:
-
-
 
 
 @app.route('/logout')
@@ -251,6 +238,7 @@ def split(player):
 def logout():
     logout_user()
     return redirect(url_for('home'))
+
 
 
 @socketio.on('con')
@@ -261,7 +249,25 @@ def handle_connection(data):
 def handle_player():
     global connected
     global user
+    print("connected to game")
+    print(request.sid)
+    User.query.filter_by(id=user.id).update({'session':request.sid})
+    room = request.sid
+    join_room(room)
+    db.session.commit()
     connected += 1
+
+#disconnect set playing to 0 remove their hand set bet to 0 session to 0
+
+@socketio.on("test")
+def handle_test():
+    playing =  User.query.filter_by(playing=1)
+    sessionIds=[]
+    for player in playing:
+        sessionIds.append(player.session)
+    socketio.emit("activate", to=sessionIds[index])
+    ##print(sessionIds[index])
+    ##print("on submit??")
 
 @socketio.on("checkTableSize")
 def checkTable():
@@ -273,8 +279,16 @@ def reloadOnce():
     global reloadFirstDeal 
     reloadFirstDeal = True
 
+    
+@socketio.on('disconnect')
+def handle_disconnect():
+    global index
+    room = request.sid
+    leave_room(room)
+    ##print(sessionIds)
+
 
 if __name__ == '__main__':
     #app.run()
-    serve(app, port=5000, threads=8)
+    serve(app, port=5000, threads=15)
    
