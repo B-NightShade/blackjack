@@ -101,6 +101,7 @@ def deal(players):
         card.dealt = 1
         hand = Hands()
         hand.cardOne = card.card_id
+        total = card.value;
         
         currentCard2 = deck.pop()
         cardSplit = currentCard2.split(" of ")
@@ -109,9 +110,13 @@ def deal(players):
         card = Card.query.filter_by(symbol=val, suit=symbol).first()
         card.dealt = 1
         hand.cardTwo = card.card_id
+        total+= card.value;
     
         hand.userId = player.id;
+        hand.value= total;
         db.session.add(hand)
+        db.session.commit()
+        User.query.filter_by(id=player.id).update({'handid':hand.hand_id})
         db.session.commit()
     hand = Hands()
     currentCard = deck.pop()
@@ -121,6 +126,7 @@ def deal(players):
     card = Card.query.filter_by(symbol=val, suit=symbol).first()
     card.dealt = 1
     hand.cardOne = card.card_id
+    dealerTotal = card.value;
     
     currentCard2 = deck.pop()
     cardSplit = currentCard2.split(" of ")
@@ -129,7 +135,9 @@ def deal(players):
     card = Card.query.filter_by(symbol=val, suit=symbol).first()
     card.dealt = 1
     hand.cardTwo = card.card_id
+    dealerTotal += card.value;
     hand.dealerId = 1;
+    hand.value = dealerTotal;
     db.session.add(hand)
     db.session.commit()
     dealt = True
@@ -189,7 +197,8 @@ def game():
             
             betting = False
             yourHand = []
-            Hand = Hands.query.filter_by(userId= user.id).first()
+            user = User.query.filter_by(id=current_user.id).first()
+            Hand = Hands.query.filter_by(hand_id= user.handid).first()
             card = Card.query.filter_by(card_id = Hand.cardOne).first()
             yourHand.append(card.image)
             card = Card.query.filter_by(card_id = Hand.cardTwo).first()
@@ -210,7 +219,7 @@ def game():
             playing =  User.query.filter_by(playing=1)
             for player in playing:
                 if(player.id != user.id):
-                    hand =  Hands.query.filter_by(userId= player.id).first()
+                    hand =  Hands.query.filter_by(hand_id= player.handid).first()
                     card = Card.query.filter_by(card_id = hand.cardOne).first()
                     card2 = Card.query.filter_by(card_id = hand.cardTwo).first()
                     cards.append(card.image)
