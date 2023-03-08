@@ -6,6 +6,7 @@ This is a temporary script file.
 """
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import null
 from waitress import serve
 from flask_socketio import SocketIO, join_room, leave_room
 from flask_login import LoginManager, UserMixin, login_user, \
@@ -111,7 +112,7 @@ def deal(players):
         card.dealt = 1
         hand.cardTwo = card.card_id
         total+= card.value;
-    
+
         hand.userId = player.id;
         hand.value= total;
         db.session.add(hand)
@@ -240,6 +241,62 @@ def logout():
     return redirect(url_for('home'))
 
 
+def hit(players):
+    for player in players:
+        currentCard = deck.pop()
+        cardSplit = currentCard.split(" of ")
+        val = cardSplit[0]
+        symbol = cardSplit[1]
+        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        card.dealt = 1
+        hand = Hands()
+        if hand.cardThree == null:
+            hand.cardThree = card.card_id
+        elif hand.cardFour == null:
+            hand.cardFour = card.card_id
+        else:
+            hand.cardFive = card.card_id
+
+
+def faceCompare(symbolOne, symbolTwo):
+    if symbolOne == "jack" & symbolTwo == "jack":
+        return True
+    if symbolOne == "queen" & symbolTwo == "queen":
+        return True
+    if symbolOne == "king" & symbolTwo == "king":
+        return True
+    if symbolOne == "10" & symbolTwo == "10":
+        return True
+
+
+def split(userId):
+    cardOne = Hands.query.filter_by(user_id=userId.cardOne).first().symbol()
+    cardTwo = Hands.query.filter_by(user_id=userId.cardTwo).first().symbol()
+    if cardOne.getVal() == cardTwo.getVal():
+        if cardOne.getVal() == 10:
+            actualSame = faceCompare(cardOne, cardTwo)
+            # if actualSame==True:
+        else:
+            hand = Hands()
+            hand.cardOne = cardTwo.card_id
+            total = cardTwo.value;
+            hand.userId = userId;
+            hand.value = total;
+            db.session.add(hand)
+            db.session.commit()
+            User.query.filter_by(id=userId).update({'splitHand': hand.hand_id})
+            db.session.commit()
+
+def stand():
+    return True
+
+def dealerLogic(dealerId):
+    dealerHand = Hands.query.filter_by(dealerId=dealerId)
+    value = dealerHand.value()
+    if value < 17:
+        hit(dealerId)
+    else:
+        stand()
 
 @socketio.on('con')
 def handle_connection(data):
