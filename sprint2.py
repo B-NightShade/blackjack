@@ -143,6 +143,13 @@ def deal(players):
     db.session.commit()
     dealt = True
 
+def getSessionsPlaying():
+    playing =  User.query.filter_by(playing=1)
+    sessions = []
+    for player in playing:
+        if player.bust != 1:
+            sessions.append(player.session)
+    return sessions
 
 connected = 0
 reloadFirstDeal = False
@@ -228,7 +235,13 @@ def game():
                     cardsCopy = cards.copy()
                     others.append(cardsCopy)
                     cards.clear()
-            return render_template("game.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting)
+            e=False
+            sessions = getSessionsPlaying()
+            if (current_user.session == sessions[index]):
+                print("enables")
+                e = True
+                return render_template("game.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting, e =e)
+            return render_template("game.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting, e=e)
     User.query.filter_by(id=user.id).update({'playing':1})
     db.session.commit()
     return render_template("game.html", user = user, betting = betting)
@@ -307,7 +320,7 @@ def handle_player():
     global connected
     global user
     print("connected to game")
-    print(request.sid)
+    #print(request.sid)
     User.query.filter_by(id=user.id).update({'session':request.sid})
     room = request.sid
     join_room(room)
@@ -322,6 +335,8 @@ def handle_test():
     sessionIds=[]
     for player in playing:
         sessionIds.append(player.session)
+    #print(sessionIds[index])
+    print("activate")
     socketio.emit("activate", to=sessionIds[index])
     ##print(sessionIds[index])
     ##print("on submit??")
@@ -342,6 +357,7 @@ def handle_disconnect():
     global index
     room = request.sid
     leave_room(room)
+    print("disconnect")
     ##print(sessionIds)
 
 
