@@ -12,9 +12,15 @@
  <img src={{card}} width ="100px">
 {% endfor %}
 <br>
+{% if e %}
+    <button type = "button"  id="hitButton">Hit</button>
+    <button type = "button"  id="stayButton">Stay</button>
+    <button type = "button"  id="splitButton">Split</button>
+{% else %}
 <button type = "button" disabled="true" id="hitButton">Hit</button>
 <button type = "button" disabled="true" id="stayButton">Stay</button>
 <button type = "button" disabled="true" id="splitButton">Split</button>
+{% endif %}
 
 <hr>
 <h1>Opponents' Cards!</h1>
@@ -58,6 +64,10 @@
         hitButton.disabled = false
         stayButton.disabled = false
         splitButton.disabled=false
+    })
+
+    socket.on("enable", function(){
+        socket.emit("test")
     })
     </script>
 </html>
