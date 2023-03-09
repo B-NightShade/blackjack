@@ -211,6 +211,9 @@ def game():
             yourHand.append(card.image)
             card = Card.query.filter_by(card_id = Hand.cardTwo).first()
             yourHand.append(card.image)
+            card = Card.query.filter_by(card_id = Hand.cardThree).first()
+            if card != None:
+                yourHand.append(card.image)
             #print(yourHand)
             
             dealers = []
@@ -232,6 +235,9 @@ def game():
                     card2 = Card.query.filter_by(card_id = hand.cardTwo).first()
                     cards.append(card.image)
                     cards.append(card2.image)
+                    card = Card.query.filter_by(card_id = hand.cardThree).first()
+                    if card != None:
+                        cards.append(card.image)
                     cardsCopy = cards.copy()
                     others.append(cardsCopy)
                     cards.clear()
@@ -254,21 +260,31 @@ def logout():
     return redirect(url_for('home'))
 
 
-def hit(players):
-    for player in players:
-        currentCard = deck.pop()
-        cardSplit = currentCard.split(" of ")
-        val = cardSplit[0]
-        symbol = cardSplit[1]
-        card = Card.query.filter_by(symbol=val, suit=symbol).first()
-        card.dealt = 1
-        hand = Hands()
-        if hand.cardThree == null:
-            hand.cardThree = card.card_id
-        elif hand.cardFour == null:
-            hand.cardFour = card.card_id
-        else:
-            hand.cardFive = card.card_id
+def hit(uid):
+    print("in hit")
+    user = User.query.filter_by(id = uid).first()
+    currentCard = deck.pop()
+    cardSplit = currentCard.split(" of ")
+    val = cardSplit[0]
+    symbol = cardSplit[1]
+    card = Card.query.filter_by(symbol=val, suit=symbol).first()
+    card.dealt = 1
+    print(user.handid)
+    hand = Hands.query.filter_by(hand_id= user.handid).first()
+    if hand.cardThree == None:
+        hand.cardThree = card.card_id
+        hand.value += card.value
+    elif hand.cardFour == None:
+        hand.cardFour = card.card_id
+        hand.value += card.value
+    else:
+        hand.cardFive = card.card_id
+        hand.value += card.value
+    db.session.commit()
+    if (hand.value > 21):
+        user.bust = 1
+        db.session.commit()
+    reload()
 
 
 def faceCompare(symbolOne, symbolTwo):
@@ -311,6 +327,23 @@ def dealerLogic(dealerId):
     else:
         stand()
 
+def reload():
+    socketio.emit("reload")
+
+@socketio.on("hit")
+def handle_hit():
+    global index
+    hit(current_user.id)
+    index += 1
+    count = 0
+    playing =  User.query.filter_by(playing=1)
+    for player in playing:
+        if player.bust != 1:
+            count += 1
+    if index > count:
+        index = 0
+
+
 @socketio.on('con')
 def handle_connection(data):
     print(data['data'])
@@ -322,10 +355,10 @@ def handle_player():
     print("connected to game")
     #print(request.sid)
     User.query.filter_by(id=user.id).update({'session':request.sid})
-    room = request.sid
-    join_room(room)
+    #room = request.sid
+    #join_room(room)
     db.session.commit()
-    connected += 1
+    #connected += 1
 
 #disconnect set playing to 0 remove their hand set bet to 0 session to 0
 
@@ -354,9 +387,8 @@ def reloadOnce():
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    global index
-    room = request.sid
-    leave_room(room)
+    ##room = request.sid
+    ##leave_room(room)
     print("disconnect")
     ##print(sessionIds)
 
