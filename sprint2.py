@@ -300,35 +300,42 @@ def hit(uid):
         db.session.commit()
     reload()
 
-
-def faceCompare(symbolOne, symbolTwo):
-    if symbolOne == "jack" & symbolTwo == "jack":
-        return True
-    if symbolOne == "queen" & symbolTwo == "queen":
-        return True
-    if symbolOne == "king" & symbolTwo == "king":
-        return True
-    if symbolOne == "10" & symbolTwo == "10":
-        return True
-
-
 def split(userId):
-    cardOne = Hands.query.filter_by(user_id=userId.cardOne).first().symbol()
-    cardTwo = Hands.query.filter_by(user_id=userId.cardTwo).first().symbol()
+    print("in split")
+    cardOne = Hands.query.filter_by(user_id=userId.cardOne).first()
+    cardTwo = Hands.query.filter_by(user_id=userId.cardTwo).first()
+    originalHand = Hands.query.filter_by(user_id=userId).first()
     if cardOne.getVal() == cardTwo.getVal():
-        if cardOne.getVal() == 10:
-            actualSame = faceCompare(cardOne, cardTwo)
-            # if actualSame==True:
-        else:
-            hand = Hands()
-            hand.cardOne = cardTwo.card_id
-            total = cardTwo.value;
-            hand.userId = userId;
-            hand.value = total;
-            db.session.add(hand)
-            db.session.commit()
-            User.query.filter_by(id=userId).update({'splitHand': hand.hand_id})
-            db.session.commit()
+        hand = Hands()
+        hand.cardOne = cardTwo.card_id
+        total = cardTwo.getVal();
+        hand.userId = userId;
+        hand.value = total;
+        db.session.add(hand)
+        db.session.commit()
+        User.query.filter_by(id=userId).update({'splitHand': hand.hand_id})
+        db.session.commit()
+
+        originalHand.value = originalHand.value - cardTwo.getVal()
+        currentCard = deck.pop()
+        cardSplit = currentCard.split(" of ")
+        val = cardSplit[0]
+        symbol = cardSplit[1]
+        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        card.dealt = 1
+        originalHand.cardTwo = card.card_id
+        total = card.value;
+        originalHand.value = + total
+
+        currentCard = deck.pop()
+        cardSplit = currentCard.split(" of ")
+        val = cardSplit[0]
+        symbol = cardSplit[1]
+        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        card.dealt = 1
+        hand.cardTwo = card.card_id
+        total = card.value;
+        hand.value = + total
 
 def stand():
     return True
