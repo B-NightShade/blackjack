@@ -13,7 +13,7 @@
 {% endfor %}
 <br>
 {% if e %}
-    <button type = "button"  id="hitButton">Hit</button>
+    <button type = "button"  id="hitButton" onclick ="hit()">Hit</button>
     <button type = "button"  id="stayButton">Stay</button>
     <button type = "button"  id="splitButton">Split</button>
 {% else %}
@@ -41,6 +41,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
 <script type="text/javascript" charset="utf-8">
     var socket = io();
+
+    const hitButton = document.getElementById("hitButton")
+    const stayButton = document.getElementById("stayButton")
+    const splitButton = document.getElementById("splitButton")
+
     socket.on('connect', function(){
         console.log("CONNECTED!")
         socket.emit('addPlayer')
@@ -51,14 +56,6 @@
         location.reload()
     })
 
-    const hitButton = document.getElementById("hitButton")
-    const stayButton = document.getElementById("stayButton")
-    const splitButton = document.getElementById("splitButton")
-
-    function playerOne(){
-        var form = document.getElementById("betForm")
-        form.style.display = "none";
-    }
 
     socket.on("activate", function(){
         hitButton.disabled = false
@@ -69,5 +66,15 @@
     socket.on("enable", function(){
         socket.emit("test")
     })
+
+    function playerOne(){
+        var form = document.getElementById("betForm")
+        form.style.display = "none";
+    }
+
+    function hit(){
+        socket.emit("hit")
+    }
+
     </script>
 </html>
