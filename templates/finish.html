@@ -1,0 +1,35 @@
+<html>
+<h1>{{ current_user.username }} Cards!</h1>
+<h2>End state</h2>
+<p>Your cash: {{ current_user.cash }}</p>
+{% if betting %}
+<form method="POST" id = "betForm" onsubmit="playerOne()">
+    <input type ="number" max = "{{user.cash}}" name = "bet">
+    <input type="hidden" name ="id" value="{{ user.session }}">
+    <input type = "submit" value = "Make bet">
+</form>
+{% else %}
+{% for card in yourHand %}
+ <img src={{card}} width ="100px">
+{% endfor %}
+<br>
+
+
+<hr>
+<h1>Opponents' Cards!</h1>
+{% for hand in others %}
+    {% for card in hand %}
+        <img src={{card}} width ="100px">
+    {% endfor %}
+<hr>
+{% endfor %}
+<hr>
+<h1>Dealer Cards</h1>
+{% for card in dealers %}
+<img src={{card}} width ="100px">
+{% endfor %}
+
+{% endif %}
+
+
+</html>
