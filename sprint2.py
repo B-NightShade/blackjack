@@ -214,6 +214,12 @@ def game():
             card = Card.query.filter_by(card_id = Hand.cardThree).first()
             if card != None:
                 yourHand.append(card.image)
+            card = Card.query.filter_by(card_id = Hand.cardFour).first()
+            if card != None:
+                yourHand.append(card.image)
+            card = Card.query.filter_by(card_id = Hand.cardFive).first()
+            if card != None:
+                yourHand.append(card.image)
             #print(yourHand)
             
             dealers = []
@@ -229,7 +235,7 @@ def game():
             cards = []
             playing =  User.query.filter_by(playing=1)
             for player in playing:
-                if(player.id != user.id):
+                if(player.id != current_user.id):
                     hand =  Hands.query.filter_by(hand_id= player.handid).first()
                     card = Card.query.filter_by(card_id = hand.cardOne).first()
                     card2 = Card.query.filter_by(card_id = hand.cardTwo).first()
@@ -238,13 +244,21 @@ def game():
                     card = Card.query.filter_by(card_id = hand.cardThree).first()
                     if card != None:
                         cards.append(card.image)
+                    card = Card.query.filter_by(card_id = hand.cardFour).first()
+                    if card != None:
+                        cards.append(card.image)
+                    card = Card.query.filter_by(card_id = hand.cardFive).first()
+                    if card != None:
+                        cards.append(card.image)
                     cardsCopy = cards.copy()
                     others.append(cardsCopy)
                     cards.clear()
             e=False
             sessions = getSessionsPlaying()
-            if (current_user.session == sessions[index]):
-                print("enables")
+            print(sessions)
+            if (len(sessions) == 0):
+                return render_template("finish.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting, e=e)
+            if(current_user.session == sessions[index] and len(sessions) != 0):
                 e = True
                 return render_template("game.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting, e =e)
             return render_template("game.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting, e=e)
@@ -261,7 +275,7 @@ def logout():
 
 
 def hit(uid):
-    print("in hit")
+    #print("in hit")
     user = User.query.filter_by(id = uid).first()
     currentCard = deck.pop()
     cardSplit = currentCard.split(" of ")
@@ -269,7 +283,7 @@ def hit(uid):
     symbol = cardSplit[1]
     card = Card.query.filter_by(symbol=val, suit=symbol).first()
     card.dealt = 1
-    print(user.handid)
+    #print(user.handid)
     hand = Hands.query.filter_by(hand_id= user.handid).first()
     if hand.cardThree == None:
         hand.cardThree = card.card_id
@@ -340,7 +354,7 @@ def handle_hit():
     for player in playing:
         if player.bust != 1:
             count += 1
-    if index > count:
+    if (index > count-1):
         index = 0
 
 
