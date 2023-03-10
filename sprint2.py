@@ -337,8 +337,11 @@ def split(userId):
         total = card.value;
         hand.value = + total
 
-def stand():
-    return True
+def stand(userId):
+    user = User.query.filter_by(id = userId).first()
+    user.bust = 1
+    db.session.commit()
+    reload()
 
 def dealerLogic(dealerId):
     dealerHand = Hands.query.filter_by(dealerId=dealerId)
@@ -364,6 +367,18 @@ def handle_hit():
     if (index > count-1):
         index = 0
 
+@socketio.on("stay")
+def handle_stay():
+    global index
+    stand(current_user.id)
+    index += 1
+    count = 0
+    playing =  User.query.filter_by(playing=1)
+    for player in playing:
+        if player.bust != 1:
+            count += 1
+    if (index > count-1):
+        index = 0
 
 @socketio.on('con')
 def handle_connection(data):
