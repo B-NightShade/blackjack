@@ -155,6 +155,7 @@ connected = 0
 reloadFirstDeal = False
 dealt = False
 index = 0
+dl = False
 
 @app.route('/', methods=['GET','POST'])
 def home():
@@ -187,6 +188,7 @@ def game():
     global reloadFirstDeal
     global dealt
     global index
+    global dl
     betting = True
     if request.method == "POST":
         userid = current_user.id
@@ -257,6 +259,17 @@ def game():
             sessions = getSessionsPlaying()
             print(sessions)
             if (len(sessions) == 0):
+                if (dl == False):
+                    dealerLogic(1)
+                dealers = []
+                dealer = Hands.query.filter_by(dealerId = 1).first()
+                card = Card.query.filter_by(card_id = dealer.cardOne).first()
+                dealers.append(card.image)
+                card = Card.query.filter_by(card_id = dealer.cardTwo).first()
+                dealers.append(card.image)
+                card = Card.query.filter_by(card_id = dealer.cardThree).first()
+                if card != None:
+                    dealers.append(card.image)
                 return render_template("finish.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting, e=e)
             if(current_user.session == sessions[index] and len(sessions) != 0):
                 e = True
@@ -344,12 +357,20 @@ def stand(userId):
     reload()
 
 def dealerLogic(dealerId):
-    dealerHand = Hands.query.filter_by(dealerId=dealerId)
-    value = dealerHand.value()
+    global dl
+    dl = True
+    dealerHand = Hands.query.filter_by(dealerId=dealerId).first()
+    value = dealerHand.value
     if value < 17:
-        hit(dealerId)
-    else:
-        stand()
+        currentCard = deck.pop()
+        cardSplit = currentCard.split(" of ")
+        val = cardSplit[0]
+        symbol = cardSplit[1]
+        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        card.dealt = 1
+        dealerHand.cardThree = card.card_id
+        dealerHand.value += card.value
+        db.session.commit()
 
 def reload():
     socketio.emit("reload")
