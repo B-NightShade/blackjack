@@ -14,7 +14,7 @@
 <br>
 {% if e %}
     <button type = "button"  id="hitButton" onclick ="hit()">Hit</button>
-    <button type = "button"  id="stayButton">Stay</button>
+    <button type = "button"  id="stayButton" onclick = "stay()">Stay</button>
     <button type = "button"  id="splitButton">Split</button>
 {% else %}
 <button type = "button" disabled="true" id="hitButton">Hit</button>
@@ -74,6 +74,10 @@
 
     function hit(){
         socket.emit("hit")
+    }
+
+    function stay(){
+        socket.emit("stay")
     }
 
     </script>
