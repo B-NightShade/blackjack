@@ -60,7 +60,7 @@ class Hands(db.Model):
     cardFour = db.Column(db.Integer)
     cardFive = db.Column(db.Integer)
     value = db.Column(db.Integer)
-     
+
 user = User()
 
 @login_manager.user_loader
@@ -441,7 +441,7 @@ def reloadOnce():
     global reloadFirstDeal 
     reloadFirstDeal = True
 
-    
+
 @socketio.on('disconnect')
 def handle_disconnect():
     ##room = request.sid
