@@ -34,7 +34,7 @@ class Card(db.Model):
     dealt = db.Column(db.Integer)
     image = db.Column(db.String(100))
     back = db.Column(db.String(100))
-  
+
 
 class User(UserMixin, db.Model):
     id = db.Column('user_id', db.Integer, primary_key = True)
@@ -45,7 +45,7 @@ class User(UserMixin, db.Model):
     handid = db.Column(db.Integer)
     splitHand = db.Column(db.Integer)
     playing = db.Column(db.Integer)
-    bet = db.Column(db.Integer)
+    personBet = db.Column(db.Integer)
     session = db.Column(db.String(100))
     bust = db.Column(db.Integer)
 
@@ -193,10 +193,10 @@ def game():
     if request.method == "POST":
         userid = current_user.id
         user = User.query.filter_by(id=userid).first()
-        User.query.filter_by(id=userid).update({'bet':1})
+        User.query.filter_by(id=userid).update({'personBet':1})
         db.session.commit()
         numberPlaying = User.query.filter_by(playing=1).count()
-        numberBet = User.query.filter_by(bet=1).count()
+        numberBet = User.query.filter_by(personBet=1).count()
         if (numberPlaying == numberBet):
             if (reloadFirstDeal == False and dealt == False):
                 print("ready to deal")
@@ -222,16 +222,13 @@ def game():
             card = Card.query.filter_by(card_id = Hand.cardFive).first()
             if card != None:
                 yourHand.append(card.image)
-            #print(yourHand)
             
             dealers = []
             dealer = Hands.query.filter_by(dealerId = 1).first()
             card = Card.query.filter_by(card_id = dealer.cardOne).first()
-            #print(card.image)
             dealers.append(card.image)
             card = Card.query.filter_by(card_id = dealer.cardTwo).first()
             dealers.append(card.back)
-            #print(dealers)
             
             others = []
             cards = []
@@ -270,6 +267,7 @@ def game():
                 card = Card.query.filter_by(card_id = dealer.cardThree).first()
                 if card != None:
                     dealers.append(card.image)
+                #socketio.emit("reload")
                 return render_template("finish.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting, e=e)
             if(current_user.session == sessions[index] and len(sessions) != 0):
                 e = True
@@ -321,15 +319,15 @@ def split(userId):
     if cardOne.getVal() == cardTwo.getVal():
         hand = Hands()
         hand.cardOne = cardTwo.card_id
-        total = cardTwo.getVal();
-        hand.userId = userId;
-        hand.value = total;
+        total = cardTwo.getVal()
+        hand.userId = userId
+        hand.value = total
         db.session.add(hand)
         db.session.commit()
         User.query.filter_by(id=userId).update({'splitHand': hand.hand_id})
         db.session.commit()
 
-        originalHand.value = originalHand.value - cardTwo.getVal()
+        originalHand.value = cardOne.getVal()
         currentCard = deck.pop()
         cardSplit = currentCard.split(" of ")
         val = cardSplit[0]
@@ -337,7 +335,7 @@ def split(userId):
         card = Card.query.filter_by(symbol=val, suit=symbol).first()
         card.dealt = 1
         originalHand.cardTwo = card.card_id
-        total = card.value;
+        total = card.value
         originalHand.value = + total
 
         currentCard = deck.pop()
@@ -347,7 +345,7 @@ def split(userId):
         card = Card.query.filter_by(symbol=val, suit=symbol).first()
         card.dealt = 1
         hand.cardTwo = card.card_id
-        total = card.value;
+        total = card.value
         hand.value = + total
 
 def stand(userId):
@@ -410,14 +408,9 @@ def handle_player():
     global connected
     global user
     print("connected to game")
-    #print(request.sid)
     User.query.filter_by(id=user.id).update({'session':request.sid})
-    #room = request.sid
-    #join_room(room)
     db.session.commit()
-    #connected += 1
 
-#disconnect set playing to 0 remove their hand set bet to 0 session to 0
 
 @socketio.on("test")
 def handle_test():
@@ -425,11 +418,8 @@ def handle_test():
     sessionIds=[]
     for player in playing:
         sessionIds.append(player.session)
-    #print(sessionIds[index])
     print("activate")
     socketio.emit("activate", to=sessionIds[index])
-    ##print(sessionIds[index])
-    ##print("on submit??")
 
 @socketio.on("checkTableSize")
 def checkTable():
@@ -442,15 +432,13 @@ def reloadOnce():
     reloadFirstDeal = True
 
 
+#disconnect set playing to 0 remove their hand set bet to 0 session to 0
 @socketio.on('disconnect')
 def handle_disconnect():
-    ##room = request.sid
-    ##leave_room(room)
     print("disconnect")
-    ##print(sessionIds)
+
 
 
 if __name__ == '__main__':
-    #app.run()
     serve(app, port=5000, threads=15)
    
