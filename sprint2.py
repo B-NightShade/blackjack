@@ -103,7 +103,7 @@ def deal(players):
         hand = Hands()
         hand.cardOne = card.card_id
         total = card.value;
-        
+
         currentCard2 = deck.pop()
         cardSplit = currentCard2.split(" of ")
         val = cardSplit[0]
@@ -128,7 +128,7 @@ def deal(players):
     card.dealt = 1
     hand.cardOne = card.card_id
     dealerTotal = card.value;
-    
+
     currentCard2 = deck.pop()
     cardSplit = currentCard2.split(" of ")
     val = cardSplit[0]
@@ -194,6 +194,9 @@ def game():
         userid = current_user.id
         user = User.query.filter_by(id=userid).first()
         User.query.filter_by(id=userid).update({'personBet':1})
+        userBet = request.form['bet']
+        User.query.filter_by(id=userid).update({'bet':userBet})
+
         db.session.commit()
         numberPlaying = User.query.filter_by(playing=1).count()
         numberBet = User.query.filter_by(personBet=1).count()
@@ -203,8 +206,8 @@ def game():
                 playing =  User.query.filter_by(playing=1)
                 deal(playing)
                 socketio.emit("reload")
-            
-            
+
+
             betting = False
             yourHand = []
             user = User.query.filter_by(id=current_user.id).first()
@@ -222,14 +225,14 @@ def game():
             card = Card.query.filter_by(card_id = Hand.cardFive).first()
             if card != None:
                 yourHand.append(card.image)
-            
+
             dealers = []
             dealer = Hands.query.filter_by(dealerId = 1).first()
             card = Card.query.filter_by(card_id = dealer.cardOne).first()
             dealers.append(card.image)
             card = Card.query.filter_by(card_id = dealer.cardTwo).first()
             dealers.append(card.back)
-            
+
             others = []
             cards = []
             playing =  User.query.filter_by(playing=1)
@@ -262,17 +265,20 @@ def game():
                 dealer = Hands.query.filter_by(dealerId = 1).first()
                 card = Card.query.filter_by(card_id = dealer.cardOne).first()
                 dealers.append(card.image)
+                dealers.append(card.image)
                 card = Card.query.filter_by(card_id = dealer.cardTwo).first()
                 dealers.append(card.image)
                 card = Card.query.filter_by(card_id = dealer.cardThree).first()
                 if card != None:
                     dealers.append(card.image)
                 #socketio.emit("reload")
-                return render_template("finish.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting, e=e)
+                wincondtions(current_user.id, 1)
+                return render_template("finish.html", user = user, yourHand = yourHand, others = others, dealers = dealers, e=e)
             if(current_user.session == sessions[index] and len(sessions) != 0):
                 e = True
                 return render_template("game.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting, e =e)
             return render_template("game.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting, e=e)
+
     User.query.filter_by(id=user.id).update({'playing':1})
     db.session.commit()
     return render_template("game.html", user = user, betting = betting)
@@ -370,6 +376,33 @@ def dealerLogic(dealerId):
         dealerHand.value += card.value
         db.session.commit()
 
+
+def wincondtions(uid, dealerId):
+    userHand = Hands.query.filter_by(userId=uid).first()
+    dealerHand = Hands.query.filter_by(dealerId=dealerId).first()
+    user = User.query.filter_by(id=uid).first()
+    userValue = userHand.value
+    dealerValue = dealerHand.value
+    userBet = user.bet  # need to change this
+
+    if (userValue >= 22):  # bust
+        user.cash = user.cash - userBet
+    elif (dealerValue >= 22 & userValue < 22):  # no bust and dealer busts
+        user.cash = user.cash + userBet
+    elif (userValue >= dealerValue & userValue < 22):  # no bust and better than dealer
+        user.cash = user.cash + userBet
+    elif (userValue < dealerValue | userValue > 22):  # no bust and worse than dealer
+        user.cash = user.cash - userBet
+    elif (userValue == 21):
+        userBet = userBet + userBet/2
+        user.cash = user.cash + (userBet)
+    db.session.commit()
+@socketio.on("betMoney")
+def getBet(uid, bet):
+    User.query.filter_by(id=uid).update({'bet': bet})
+    print("got Bet")
+    db.session.commit()
+
 def reload():
     socketio.emit("reload")
 
@@ -428,9 +461,15 @@ def checkTable():
 
 @socketio.on("dealOne")
 def reloadOnce():
-    global reloadFirstDeal 
+    global reloadFirstDeal
     reloadFirstDeal = True
 
+@socketio.on("gameRepeat")
+def gameRepeat():
+    print("repeat")
+@socketio.on("gameReset")
+def gameReset():
+    print("reset")
 
 #disconnect set playing to 0 remove their hand set bet to 0 session to 0
 @socketio.on('disconnect')
@@ -441,4 +480,4 @@ def handle_disconnect():
 
 if __name__ == '__main__':
     serve(app, port=5000, threads=15)
-   
+

@@ -3,8 +3,8 @@
 <p>Your cash: {{ current_user.cash }}</p>
 {% if betting %}
 <form method="POST" id = "betForm" onsubmit="playerOne()">
-    <input type ="number" max = "{{user.cash}}" name = "bet">
-    <input type="hidden" name ="id" value="{{ user.session }}">
+    <input type ="number" max = "{{user.cash}}" name = "bet" id = "money">
+    <input type="hidden" name ="id" value="{{ user.session }}" id = "userID">
     <input type = "submit" value = "Make bet">
 </form>
 {% else %}
@@ -70,6 +70,12 @@
     function playerOne(){
         var form = document.getElementById("betForm")
         form.style.display = "none";
+        /*
+        var betMoney = document.getElementById("money")
+        var betUser = document.getElementById("userID")
+        //getBet(betUser, betMoney)
+        socket.emit("betMoney",{uid: betUser}, {bet: betMoney})
+        */
     }
 
     function hit(){

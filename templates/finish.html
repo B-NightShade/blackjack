@@ -2,13 +2,17 @@
 <h1>{{ current_user.username }} Cards!</h1>
 <h2>End state</h2>
 <p>Your cash: {{ current_user.cash }}</p>
-{% if betting %}
-<form method="POST" id = "betForm" onsubmit="playerOne()">
-    <input type ="number" max = "{{user.cash}}" name = "bet">
-    <input type="hidden" name ="id" value="{{ user.session }}">
-    <input type = "submit" value = "Make bet">
-</form>
-{% else %}
+<!--{% if betting %}-->
+<!--<form method="POST" id = "betForm" onsubmit="playerOne()">-->
+<!--    <input type ="number" max = "{{user.cash}}" name = "bet">-->
+<!--    <input type="hidden" name ="id" value="{{ user.session }}">-->
+<!--    <input type = "submit" value = "Make bet">-->
+<!--</form>-->
+<!--{% else %}-->
+<h1>Play Again?</h1>
+<button type = "button"  id="playAgain" onclick ="gameRepeat()">Yes</button>
+<button type = "button"  id="reset" onclick ="gameReset()">No</button>
+<h1> </h1>
 {% for card in yourHand %}
  <img src={{card}} width ="100px">
 {% endfor %}
@@ -29,7 +33,17 @@
 <img src={{card}} width ="100px">
 {% endfor %}
 
-{% endif %}
+<!--{% endif %}-->
+<script type="text/javascript" charset="utf-8">
+    var socket = io();
+
+    function gameRepeat(){
+        socket.emit("gameRepeat")
+    }
+    function gameReset(){
+        socket.emit("gameReset")
+    }
+</script>
 
 
 </html>
