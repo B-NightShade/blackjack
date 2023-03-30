@@ -319,13 +319,20 @@ def hit(uid):
 
 def split(userId):
     print("in split")
-    cardOne = Hands.query.filter_by(user_id=userId.cardOne).first()
-    cardTwo = Hands.query.filter_by(user_id=userId.cardTwo).first()
-    originalHand = Hands.query.filter_by(user_id=userId).first()
-    if cardOne.getVal() == cardTwo.getVal():
+    global index
+    #query hand and then query card from hand not like this!
+    user = User.query.filter_by(id = userId).first()
+    handOne = Hands.query.filter_by(hand_id= user.handid).first()
+    cardOne = handOne.cardOne
+    cardTwo = handOne.cardTwo
+    originalHand = Hands.query.filter_by(hand_id= user.handid).first()
+    c1 = Card.query.filter_by(card_id = cardOne).first()
+    c2 = Card.query.filter_by(card_id = cardTwo).first()
+    if c1.value == c2.value:
+        print("split valid")
         hand = Hands()
-        hand.cardOne = cardTwo.card_id
-        total = cardTwo.getVal()
+        hand.cardOne = c2.card_id
+        total = c2.value
         hand.userId = userId
         hand.value = total
         db.session.add(hand)
@@ -333,7 +340,7 @@ def split(userId):
         User.query.filter_by(id=userId).update({'splitHand': hand.hand_id})
         db.session.commit()
 
-        originalHand.value = cardOne.getVal()
+        originalHand.value = c1.value
         currentCard = deck.pop()
         cardSplit = currentCard.split(" of ")
         val = cardSplit[0]
@@ -353,6 +360,15 @@ def split(userId):
         hand.cardTwo = card.card_id
         total = card.value
         hand.value = + total
+        
+        index += 1
+        count = 0
+        playing =  User.query.filter_by(playing=1)
+        for player in playing:
+            if player.bust != 1:
+                count += 1
+        if (index > count-1):
+            index = 0
 
 def stand(userId):
     user = User.query.filter_by(id = userId).first()
