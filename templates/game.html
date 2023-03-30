@@ -8,8 +8,11 @@
     <input type = "submit" value = "Make bet">
 </form>
 {% else %}
-{% for card in yourHand %}
- <img src={{card}} width ="100px">
+{%for hand in yourHands %}
+    {% for card in hand %}
+        <img src={{card}} width ="100px">
+    {% endfor %}
+    <br>
 {% endfor %}
 <br>
 {% if e %}
