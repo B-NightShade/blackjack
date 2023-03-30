@@ -151,6 +151,112 @@ def getSessionsPlaying():
             sessions.append(player.session)
     return sessions
 
+
+def hit(uid):
+    #print("in hit")
+    user = User.query.filter_by(id = uid).first()
+    currentCard = deck.pop()
+    cardSplit = currentCard.split(" of ")
+    val = cardSplit[0]
+    symbol = cardSplit[1]
+    card = Card.query.filter_by(symbol=val, suit=symbol).first()
+    card.dealt = 1
+    #print(user.handid)
+    hand = Hands.query.filter_by(hand_id= user.handid).first()
+    if hand.cardThree == None:
+        hand.cardThree = card.card_id
+        hand.value += card.value
+    elif hand.cardFour == None:
+        hand.cardFour = card.card_id
+        hand.value += card.value
+    else:
+        hand.cardFive = card.card_id
+        hand.value += card.value
+    db.session.commit()
+    if (hand.value > 21):
+        user.bust = 1
+        db.session.commit()
+    reload()
+
+def split(userId):
+    print("in split")
+    global index
+    #query hand and then query card from hand not like this!
+    user = User.query.filter_by(id = userId).first()
+    handOne = Hands.query.filter_by(hand_id= user.handid).first()
+    cardOne = handOne.cardOne
+    cardTwo = handOne.cardTwo
+    originalHand = Hands.query.filter_by(hand_id= user.handid).first()
+    c1 = Card.query.filter_by(card_id = cardOne).first()
+    c2 = Card.query.filter_by(card_id = cardTwo).first()
+    if c1.value == c2.value:
+        print("split valid")
+        hand = Hands()
+        hand.cardOne = c2.card_id
+        total = c2.value
+        hand.userId = userId
+        hand.value = total
+        db.session.add(hand)
+        db.session.commit()
+        User.query.filter_by(id=userId).update({'splitHand': hand.hand_id})
+        db.session.commit()
+
+        originalHand.value = c1.value
+        currentCard = deck.pop()
+        cardSplit = currentCard.split(" of ")
+        val = cardSplit[0]
+        symbol = cardSplit[1]
+        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        card.dealt = 1
+        originalHand.cardTwo = card.card_id
+        total = card.value
+        originalHand.value = + total
+
+        currentCard = deck.pop()
+        cardSplit = currentCard.split(" of ")
+        val = cardSplit[0]
+        symbol = cardSplit[1]
+        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        card.dealt = 1
+        hand.cardTwo = card.card_id
+        total = card.value
+        hand.value = + total
+        db.session.commit()
+        
+        index += 1
+        count = 0
+        playing =  User.query.filter_by(playing=1)
+        for player in playing:
+            if player.bust != 1:
+                count += 1
+        if (index > count-1):
+            index = 0
+
+def stand(userId):
+    user = User.query.filter_by(id = userId).first()
+    user.bust = 1
+    db.session.commit()
+    reload()
+
+def dealerLogic(dealerId):
+    global dl
+    dl = True
+    dealerHand = Hands.query.filter_by(dealerId=dealerId).first()
+    value = dealerHand.value
+    if value < 17:
+        currentCard = deck.pop()
+        cardSplit = currentCard.split(" of ")
+        val = cardSplit[0]
+        symbol = cardSplit[1]
+        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        card.dealt = 1
+        dealerHand.cardThree = card.card_id
+        dealerHand.value += card.value
+        db.session.commit()
+
+def reload():
+    socketio.emit("reload")
+
 connected = 0
 reloadFirstDeal = False
 dealt = False
@@ -285,94 +391,6 @@ def logout():
     return redirect(url_for('home'))
 
 
-def hit(uid):
-    #print("in hit")
-    user = User.query.filter_by(id = uid).first()
-    currentCard = deck.pop()
-    cardSplit = currentCard.split(" of ")
-    val = cardSplit[0]
-    symbol = cardSplit[1]
-    card = Card.query.filter_by(symbol=val, suit=symbol).first()
-    card.dealt = 1
-    #print(user.handid)
-    hand = Hands.query.filter_by(hand_id= user.handid).first()
-    if hand.cardThree == None:
-        hand.cardThree = card.card_id
-        hand.value += card.value
-    elif hand.cardFour == None:
-        hand.cardFour = card.card_id
-        hand.value += card.value
-    else:
-        hand.cardFive = card.card_id
-        hand.value += card.value
-    db.session.commit()
-    if (hand.value > 21):
-        user.bust = 1
-        db.session.commit()
-    reload()
-
-def split(userId):
-    print("in split")
-    cardOne = Hands.query.filter_by(user_id=userId.cardOne).first()
-    cardTwo = Hands.query.filter_by(user_id=userId.cardTwo).first()
-    originalHand = Hands.query.filter_by(user_id=userId).first()
-    if cardOne.getVal() == cardTwo.getVal():
-        hand = Hands()
-        hand.cardOne = cardTwo.card_id
-        total = cardTwo.getVal()
-        hand.userId = userId
-        hand.value = total
-        db.session.add(hand)
-        db.session.commit()
-        User.query.filter_by(id=userId).update({'splitHand': hand.hand_id})
-        db.session.commit()
-
-        originalHand.value = cardOne.getVal()
-        currentCard = deck.pop()
-        cardSplit = currentCard.split(" of ")
-        val = cardSplit[0]
-        symbol = cardSplit[1]
-        card = Card.query.filter_by(symbol=val, suit=symbol).first()
-        card.dealt = 1
-        originalHand.cardTwo = card.card_id
-        total = card.value
-        originalHand.value = + total
-
-        currentCard = deck.pop()
-        cardSplit = currentCard.split(" of ")
-        val = cardSplit[0]
-        symbol = cardSplit[1]
-        card = Card.query.filter_by(symbol=val, suit=symbol).first()
-        card.dealt = 1
-        hand.cardTwo = card.card_id
-        total = card.value
-        hand.value = + total
-
-def stand(userId):
-    user = User.query.filter_by(id = userId).first()
-    user.bust = 1
-    db.session.commit()
-    reload()
-
-def dealerLogic(dealerId):
-    global dl
-    dl = True
-    dealerHand = Hands.query.filter_by(dealerId=dealerId).first()
-    value = dealerHand.value
-    if value < 17:
-        currentCard = deck.pop()
-        cardSplit = currentCard.split(" of ")
-        val = cardSplit[0]
-        symbol = cardSplit[1]
-        card = Card.query.filter_by(symbol=val, suit=symbol).first()
-        card.dealt = 1
-        dealerHand.cardThree = card.card_id
-        dealerHand.value += card.value
-        db.session.commit()
-
-def reload():
-    socketio.emit("reload")
-
 @socketio.on("hit")
 def handle_hit():
     global index
@@ -398,6 +416,11 @@ def handle_stay():
             count += 1
     if (index > count-1):
         index = 0
+        
+@socketio.on("split")
+def handle_split():
+    split(current_user.id)
+    
 
 @socketio.on('con')
 def handle_connection(data):
