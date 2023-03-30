@@ -102,7 +102,7 @@ def deal(players):
         card.dealt = 1
         hand = Hands()
         hand.cardOne = card.card_id
-        total = card.value;
+        total = card.value
 
         currentCard2 = deck.pop()
         cardSplit = currentCard2.split(" of ")
@@ -111,9 +111,9 @@ def deal(players):
         card = Card.query.filter_by(symbol=val, suit=symbol).first()
         card.dealt = 1
         hand.cardTwo = card.card_id
-        total+= card.value;
+        total+= card.value
 
-        hand.userId = player.id;
+        hand.userId = player.id
         hand.value= total;
         db.session.add(hand)
         db.session.commit()
@@ -127,7 +127,7 @@ def deal(players):
     card = Card.query.filter_by(symbol=val, suit=symbol).first()
     card.dealt = 1
     hand.cardOne = card.card_id
-    dealerTotal = card.value;
+    dealerTotal = card.value
 
     currentCard2 = deck.pop()
     cardSplit = currentCard2.split(" of ")
@@ -136,9 +136,9 @@ def deal(players):
     card = Card.query.filter_by(symbol=val, suit=symbol).first()
     card.dealt = 1
     hand.cardTwo = card.card_id
-    dealerTotal += card.value;
+    dealerTotal += card.value
     hand.dealerId = 1;
-    hand.value = dealerTotal;
+    hand.value = dealerTotal
     db.session.add(hand)
     db.session.commit()
     dealt = True
@@ -209,7 +209,9 @@ def game():
 
 
             betting = False
+            yourHands = []
             yourHand = []
+            sHand = []
             user = User.query.filter_by(id=current_user.id).first()
             Hand = Hands.query.filter_by(hand_id= user.handid).first()
             card = Card.query.filter_by(card_id = Hand.cardOne).first()
@@ -225,6 +227,25 @@ def game():
             card = Card.query.filter_by(card_id = Hand.cardFive).first()
             if card != None:
                 yourHand.append(card.image)
+            yourHands.append(yourHand)
+            if user.splitHand != None:
+                userSplitHand = Hands.query.filter_by(hand_id= user.splitHand).first()
+                card = Card.query.filter_by(card_id = userSplitHand.cardOne).first()
+                sHand.append(card.image)
+                card = Card.query.filter_by(card_id = userSplitHand.cardTwo).first()
+                sHand.append(card.image)
+                card = Card.query.filter_by(card_id = userSplitHand.cardThree).first()
+                if card != None:
+                    sHand.append(card.image)
+                card = Card.query.filter_by(card_id = userSplitHand.cardFour).first()
+                if card != None:
+                    sHand.append(card.image)
+                card = Card.query.filter_by(card_id = userSplitHand.cardFive).first()
+                if card != None:
+                    sHand.append(card.image)
+                yourHands.append(sHand)
+            
+            #print(yourHands)
 
             dealers = []
             dealer = Hands.query.filter_by(dealerId = 1).first()
@@ -265,7 +286,6 @@ def game():
                 dealer = Hands.query.filter_by(dealerId = 1).first()
                 card = Card.query.filter_by(card_id = dealer.cardOne).first()
                 dealers.append(card.image)
-                dealers.append(card.image)
                 card = Card.query.filter_by(card_id = dealer.cardTwo).first()
                 dealers.append(card.image)
                 card = Card.query.filter_by(card_id = dealer.cardThree).first()
@@ -273,11 +293,12 @@ def game():
                     dealers.append(card.image)
                 #socketio.emit("reload")
                 wincondtions(current_user.id, 1)
-                return render_template("finish.html", user = user, yourHand = yourHand, others = others, dealers = dealers, e=e)
+                print(yourHands)
+                return render_template("finish.html", user = user, yourHands = yourHands, others = others, dealers = dealers, e=e)
             if(current_user.session == sessions[index] and len(sessions) != 0):
                 e = True
-                return render_template("game.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting, e =e)
-            return render_template("game.html", user = user, yourHand = yourHand, others = others, dealers = dealers, betting = betting, e=e)
+                return render_template("game.html", user = user, yourHands = yourHands, others = others, dealers = dealers, betting = betting, e =e)
+            return render_template("game.html", user = user, yourHands = yourHands, others = others, dealers = dealers, betting = betting, e=e)
 
     User.query.filter_by(id=user.id).update({'playing':1})
     db.session.commit()
@@ -319,21 +340,36 @@ def hit(uid):
 
 def split(userId):
     print("in split")
-    cardOne = Hands.query.filter_by(user_id=userId.cardOne).first()
-    cardTwo = Hands.query.filter_by(user_id=userId.cardTwo).first()
-    originalHand = Hands.query.filter_by(user_id=userId).first()
-    if cardOne.getVal() == cardTwo.getVal():
+    global index
+    #query hand and then query card from hand not like this!
+    user = User.query.filter_by(id = userId).first()
+    handOne = Hands.query.filter_by(hand_id= user.handid).first()
+    cardOne = handOne.cardOne
+    cardTwo = handOne.cardTwo
+    originalHand = Hands.query.filter_by(hand_id= user.handid).first()
+    c1 = Card.query.filter_by(card_id = cardOne).first()
+    c2 = Card.query.filter_by(card_id = cardTwo).first()
+    if c1.value == c2.value:
+        print("split valid")
         hand = Hands()
-        hand.cardOne = cardTwo.card_id
-        total = cardTwo.getVal()
+        hand.cardOne = c2.card_id
+        total = c2.value
         hand.userId = userId
         hand.value = total
+        currentCard = deck.pop()
+        cardSplit = currentCard.split(" of ")
+        val = cardSplit[0]
+        symbol = cardSplit[1]
+        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        card.dealt = 1
+        hand.cardTwo = card.card_id
+        hand.value += card.value
         db.session.add(hand)
         db.session.commit()
         User.query.filter_by(id=userId).update({'splitHand': hand.hand_id})
         db.session.commit()
 
-        originalHand.value = cardOne.getVal()
+        originalHand.value = c1.value
         currentCard = deck.pop()
         cardSplit = currentCard.split(" of ")
         val = cardSplit[0]
@@ -343,16 +379,17 @@ def split(userId):
         originalHand.cardTwo = card.card_id
         total = card.value
         originalHand.value = + total
-
-        currentCard = deck.pop()
-        cardSplit = currentCard.split(" of ")
-        val = cardSplit[0]
-        symbol = cardSplit[1]
-        card = Card.query.filter_by(symbol=val, suit=symbol).first()
-        card.dealt = 1
-        hand.cardTwo = card.card_id
-        total = card.value
-        hand.value = + total
+        db.session.commit()
+        
+        index += 1
+        count = 0
+        playing =  User.query.filter_by(playing=1)
+        for player in playing:
+            if player.bust != 1:
+                count += 1
+        if (index > count-1):
+            index = 0
+        reload()
 
 def stand(userId):
     user = User.query.filter_by(id = userId).first()
@@ -397,6 +434,7 @@ def wincondtions(uid, dealerId):
         userBet = userBet + userBet/2
         user.cash = user.cash + (userBet)
     db.session.commit()
+    
 @socketio.on("betMoney")
 def getBet(uid, bet):
     User.query.filter_by(id=uid).update({'bet': bet})
@@ -431,6 +469,10 @@ def handle_stay():
             count += 1
     if (index > count-1):
         index = 0
+    
+@socketio.on("split")
+def handle_split():
+    split(current_user.id)
 
 @socketio.on('con')
 def handle_connection(data):
@@ -480,4 +522,3 @@ def handle_disconnect():
 
 if __name__ == '__main__':
     serve(app, port=5000, threads=15)
-

@@ -13,8 +13,11 @@
 <button type = "button"  id="playAgain" onclick ="gameRepeat()">Yes</button>
 <button type = "button"  id="reset" onclick ="gameReset()">No</button>
 <h1> </h1>
-{% for card in yourHand %}
- <img src={{card}} width ="100px">
+{%for hand in yourHands %}
+    {% for card in hand %}
+        <img src={{card}} width ="100px">
+    {% endfor %}
+    <br>
 {% endfor %}
 <br>
 
