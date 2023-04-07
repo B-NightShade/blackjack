@@ -244,8 +244,6 @@ def game():
                 if card != None:
                     sHand.append(card.image)
                 yourHands.append(sHand)
-            
-            #print(yourHands)
 
             dealers = []
             dealer = Hands.query.filter_by(dealerId = 1).first()
@@ -313,9 +311,9 @@ def game():
                 if card != None:
                     dealers.append(card.image)
                 #socketio.emit("reload")
-                wincondtions(current_user.id, 1)
+                win = wincondtions(current_user.id, 1)
                 print(yourHands)
-                return render_template("finish.html", user = user, yourHands = yourHands, others = others, dealers = dealers, e=e)
+                return render_template("finish.html", user = user, yourHands = yourHands, others = others, dealers = dealers, e=e, win=win)
             if(current_user.session == sessions[index] and len(sessions) != 0):
                 e = True
                 return render_template("game.html", user = user, yourHands = yourHands, others = others, dealers = dealers, betting = betting, e =e)
@@ -399,7 +397,7 @@ def split(userId):
         card.dealt = 1
         originalHand.cardTwo = card.card_id
         total = card.value
-        originalHand.value = + total
+        originalHand.value += total
         db.session.commit()
         
         index += 1
@@ -445,15 +443,20 @@ def wincondtions(uid, dealerId):
 
     if (userValue >= 22):  # bust
         user.cash = user.cash - userBet
+        return "lost"
     elif (dealerValue >= 22 & userValue < 22):  # no bust and dealer busts
         user.cash = user.cash + userBet
+        return "win"
     elif (userValue >= dealerValue & userValue < 22):  # no bust and better than dealer
         user.cash = user.cash + userBet
+        return "win"
     elif (userValue < dealerValue | userValue > 22):  # no bust and worse than dealer
         user.cash = user.cash - userBet
+        return "lost"
     elif (userValue == 21):
         userBet = userBet + userBet/2
         user.cash = user.cash + (userBet)
+        return "win"
     db.session.commit()
     
 @socketio.on("betMoney")
@@ -542,4 +545,4 @@ def handle_disconnect():
 
 
 if __name__ == '__main__':
-    serve(app, port=5000, threads=15)
+    serve(app, port=5000, threads=25)
