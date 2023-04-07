@@ -1,21 +1,14 @@
 <html>
-<h1>{{ current_user.username }} Cards!</h1>
-<h2>End state</h2>
+<h4>{{ current_user.username }} Cards!</h4>
+<h5>End state</h5>
 <p>Your cash: {{ current_user.cash }}</p>
-<!--{% if betting %}-->
-<!--<form method="POST" id = "betForm" onsubmit="playerOne()">-->
-<!--    <input type ="number" max = "{{user.cash}}" name = "bet">-->
-<!--    <input type="hidden" name ="id" value="{{ user.session }}">-->
-<!--    <input type = "submit" value = "Make bet">-->
-<!--</form>-->
-<!--{% else %}-->
-<h1>Play Again?</h1>
+<h5>Play Again?</h5>
 <button type = "button"  id="playAgain" onclick ="gameRepeat()">Yes</button>
 <button type = "button"  id="reset" onclick ="gameReset()">No</button>
 <h1> </h1>
 {%for hand in yourHands %}
     {% for card in hand %}
-        <img src={{card}} width ="100px">
+        <img src={{card}} width ="50px">
     {% endfor %}
     <br>
 {% endfor %}
@@ -23,20 +16,20 @@
 
 
 <hr>
-<h1>Opponents' Cards!</h1>
+<h6>Opponents' Cards!</h6>
 {% for hand in others %}
     {% for card in hand %}
-        <img src={{card}} width ="100px">
+        <img src={{card}} width ="50px">
     {% endfor %}
 <hr>
 {% endfor %}
 <hr>
-<h1>Dealer Cards</h1>
+
+<h6>Dealer Cards</h6>
 {% for card in dealers %}
-<img src={{card}} width ="100px">
+<img src={{card}} width ="50px">
 {% endfor %}
 
-<!--{% endif %}-->
 <script type="text/javascript" charset="utf-8">
     var socket = io();
 

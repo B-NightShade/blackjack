@@ -256,6 +256,7 @@ def game():
 
             others = []
             cards = []
+            scards=[]
             playing =  User.query.filter_by(playing=1)
             for player in playing:
                 if(player.id != current_user.id):
@@ -276,6 +277,26 @@ def game():
                     cardsCopy = cards.copy()
                     others.append(cardsCopy)
                     cards.clear()
+                    
+                    if player.splitHand != None:
+                        splitOffHand = Hands.query.filter_by(hand_id= player.splitHand).first()
+                        card = Card.query.filter_by(card_id = splitOffHand.cardOne).first()
+                        card2 = Card.query.filter_by(card_id = splitOffHand.cardTwo).first()
+                        scards.append(card.image)
+                        scards.append(card2.image)
+                        card = Card.query.filter_by(card_id = splitOffHand.cardThree).first()
+                        if card != None:
+                            scards.append(card.image)
+                        card = Card.query.filter_by(card_id = splitOffHand.cardFour).first()
+                        if card != None:
+                            scards.append(card.image)
+                        card = Card.query.filter_by(card_id = splitOffHand.cardFive).first()
+                        if card != None:
+                            scards.append(card.image)
+                        copySplit = scards.copy()
+                        others.append(copySplit)
+                        scards.clear()
+                        
             e=False
             sessions = getSessionsPlaying()
             print(sessions)
