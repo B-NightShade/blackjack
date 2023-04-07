@@ -1,5 +1,5 @@
 <html>
-<h1>{{ current_user.username }} Cards!</h1>
+<h4>{{ current_user.username }} Cards!</h4>
 <p>Your cash: {{ current_user.cash }}</p>
 {% if betting %}
 <form method="POST" id = "betForm" onsubmit="playerOne()">
@@ -10,7 +10,7 @@
 {% else %}
 {%for hand in yourHands %}
     {% for card in hand %}
-        <img src={{card}} width ="100px">
+        <img src={{card}} width ="50px">
     {% endfor %}
     <br>
 {% endfor %}
@@ -26,17 +26,18 @@
 {% endif %}
 
 <hr>
-<h1>Opponents' Cards!</h1>
+<div>
+<h6>Opponents' Cards!</h6>
 {% for hand in others %}
     {% for card in hand %}
-        <img src={{card}} width ="100px">
+        <img src={{card}} width ="50px">
     {% endfor %}
-<hr>
 {% endfor %}
+<br>
 <hr>
-<h1>Dealer Cards</h1>
+<h6>Dealer Cards</h6>
 {% for card in dealers %}
-<img src={{card}} width ="100px">
+<img src={{card}} width ="50px">
 {% endfor %}
 
 {% endif %}
@@ -73,12 +74,6 @@
     function playerOne(){
         var form = document.getElementById("betForm")
         form.style.display = "none";
-        /*
-        var betMoney = document.getElementById("money")
-        var betUser = document.getElementById("userID")
-        //getBet(betUser, betMoney)
-        socket.emit("betMoney",{uid: betUser}, {bet: betMoney})
-        */
     }
 
     function hit(){
@@ -94,4 +89,5 @@
     }
 
     </script>
+
 </html>
