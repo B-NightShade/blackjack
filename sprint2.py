@@ -462,22 +462,17 @@ def wincondtions(uid, dealerId):
 
     if (userValue >= 22):  # bust
         user.cash = user.cash - userBet
-        return "lost"
-    elif (dealerValue >= 22 & userValue < 22):  # no bust and dealer busts
+    elif (dealerValue >= 22 and userValue < 22):  # no bust and dealer busts
         user.cash = user.cash + userBet
-        return "win"
-    elif (userValue >= dealerValue & userValue < 22):  # no bust and better than dealer
+    elif (userValue >= dealerValue and userValue < 22):  # no bust and better than dealer
         user.cash = user.cash + userBet
-        return "win"
-    elif (userValue < dealerValue | userValue > 22):  # no bust and worse than dealer
+    elif (userValue < dealerValue or userValue > 22):  # no bust and worse than dealer
         user.cash = user.cash - userBet
-        return "lost"
     elif (userValue == 21):
-        userBet = userBet + userBet/2
+        userBet = userBet + userBet / 2
         user.cash = user.cash + (userBet)
-        return "win"
     db.session.commit()
-    
+
 @socketio.on("betMoney")
 def getBet(uid, bet):
     User.query.filter_by(id=uid).update({'bet': bet})
@@ -549,12 +544,30 @@ def reloadOnce():
     global reloadFirstDeal
     reloadFirstDeal = True
 
+
 @socketio.on("gameRepeat")
 def gameRepeat():
     print("repeat")
+    databaseReset()
+    return redirect('/game')
+
 @socketio.on("gameReset")
 def gameReset():
     print("reset")
+    databaseReset()
+
+def databaseReset():
+    numberPlaying = User.query.all()
+    # numberPlaying = User.query.filter_by(playing=1).count() + 1
+    User.query.filter_by(playing=1).update({'personBet': 0})
+    User.query.filter_by(playing=1).update({'bust': 0})
+    User.query.filter_by(playing=1).update({'splitHand': None})
+    User.query.filter_by(playing=1).update({'playing': 0})
+    db.session.commit()
+    Card.query.filter_by(dealt=1).update({'dealt': 0})
+    db.session.commit()
+    db.session.execute('DELETE FROM Hands')
+    db.session.commit()
 
 #disconnect set playing to 0 remove their hand set bet to 0 session to 0
 @socketio.on('disconnect')
