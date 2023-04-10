@@ -204,6 +204,8 @@ def game():
     global dealt
     global index
     global dl
+    global buttonPressed
+
     betting = True
     if request.method == "POST":
         userid = current_user.id
@@ -326,6 +328,7 @@ def game():
                 if card != None:
                     dealers.append(card.image)
                 #socketio.emit("reload")
+                buttonPressed = False
                 win = wincondtions(current_user.id, 1)
                 print(yourHands)
                 return render_template("finish.html", user = user, yourHands = yourHands, others = others, dealers = dealers, e=e, win=win)
@@ -547,14 +550,29 @@ def reloadOnce():
 
 @socketio.on("gameRepeat")
 def gameRepeat():
+    global buttonPressed
+    buttonPressed = True
     print("repeat")
     databaseReset()
-    return redirect('/game')
+    return redirect(url_for('game'))
+    print("Did not redirect")
 
 @socketio.on("gameReset")
 def gameReset():
+    global buttonPressed
+    buttonPressed = True
     print("reset")
     databaseReset()
+
+@socketio.on("gameLogOut")
+def gameReset():
+    global buttonPressed
+    if buttonPressed == False:
+        print("logout")
+        databaseReset()
+        #socketio.emit('logout')
+        return redirect(url_for('logout'))
+
 
 def databaseReset():
     numberPlaying = User.query.all()
@@ -565,6 +583,7 @@ def databaseReset():
     User.query.filter_by(playing=1).update({'playing': 0})
     db.session.commit()
     Card.query.filter_by(dealt=1).update({'dealt': 0})
+    Card.query.filter_by(dealt=2).update({'dealt': 0})
     db.session.commit()
     db.session.execute('DELETE FROM Hands')
     db.session.commit()
