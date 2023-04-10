@@ -15,6 +15,7 @@ import random
 
 
 
+
 app = Flask(__name__, static_url_path='/static')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blackjack.db'
@@ -69,6 +70,7 @@ def load_user(uid):
     user = User.query.get(uid)
     return user
 
+'''
 symbol = [2, 3, 4, 5, 6, 7, 8, 9, 10, "jack", "queen", "king", "ace"]
 
 
@@ -80,6 +82,7 @@ for i in range(0,3):
         for s in suit:
             deck.append(str(v) + " of " + s)
 random.shuffle(deck)
+'''
 
 def getVal(symbol):
     if symbol == "jack" or symbol == "queen" or symbol == "king":
@@ -90,25 +93,35 @@ def getVal(symbol):
         value=int(symbol)
     return int(value)
 
+def getCard():
+    c = db.session.execute('SELECT * FROM Card WHERE dealt = 0 ORDER BY RANDOM() LIMIT 1')
+    print("c:")
+    for row in c:
+        c_id = row["card_id"]
+        print(c_id)
+    return c_id
+
 def deal(players):
     global dealt
     print("dealing")
     for player in players:
-        currentCard = deck.pop()
-        cardSplit = currentCard.split(" of ")
-        val = cardSplit[0]
-        symbol = cardSplit[1]
-        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        c_id = getCard()
+        #currentCard = deck.pop()
+        #cardSplit = currentCard.split(" of ")
+        #val = cardSplit[0]
+        #symbol = cardSplit[1]
+        card = Card.query.filter_by(card_id = c_id).first()
         card.dealt = 1
         hand = Hands()
         hand.cardOne = card.card_id
         total = card.value
 
-        currentCard2 = deck.pop()
-        cardSplit = currentCard2.split(" of ")
-        val = cardSplit[0]
-        symbol = cardSplit[1]
-        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        #currentCard2 = deck.pop()
+        #cardSplit = currentCard2.split(" of ")
+        #val = cardSplit[0]
+        #symbol = cardSplit[1]
+        c_id = getCard()
+        card = Card.query.filter_by(card_id = c_id).first()
         card.dealt = 1
         hand.cardTwo = card.card_id
         total+= card.value
@@ -120,20 +133,22 @@ def deal(players):
         User.query.filter_by(id=player.id).update({'handid':hand.hand_id})
         db.session.commit()
     hand = Hands()
-    currentCard = deck.pop()
-    cardSplit = currentCard.split(" of ")
-    val = cardSplit[0]
-    symbol = cardSplit[1]
-    card = Card.query.filter_by(symbol=val, suit=symbol).first()
+    c_id = getCard()
+    #currentCard = deck.pop()
+    #cardSplit = currentCard.split(" of ")
+    #val = cardSplit[0]
+    #symbol = cardSplit[1]
+    card = Card.query.filter_by(card_id = c_id).first()
     card.dealt = 1
     hand.cardOne = card.card_id
     dealerTotal = card.value
-
-    currentCard2 = deck.pop()
-    cardSplit = currentCard2.split(" of ")
-    val = cardSplit[0]
-    symbol = cardSplit[1]
-    card = Card.query.filter_by(symbol=val, suit=symbol).first()
+    
+    c_id = getCard()
+    #currentCard2 = deck.pop()
+    #cardSplit = currentCard2.split(" of ")
+    #val = cardSplit[0]
+    #symbol = cardSplit[1]
+    card = Card.query.filter_by(card_id = c_id).first()
     card.dealt = 1
     hand.cardTwo = card.card_id
     dealerTotal += card.value
@@ -334,11 +349,12 @@ def logout():
 def hit(uid):
     #print("in hit")
     user = User.query.filter_by(id = uid).first()
-    currentCard = deck.pop()
-    cardSplit = currentCard.split(" of ")
-    val = cardSplit[0]
-    symbol = cardSplit[1]
-    card = Card.query.filter_by(symbol=val, suit=symbol).first()
+    c_id = getCard()
+    #currentCard = deck.pop()
+    #cardSplit = currentCard.split(" of ")
+    #val = cardSplit[0]
+    #symbol = cardSplit[1]
+    card = Card.query.filter_by(card_id = c_id).first()
     card.dealt = 1
     #print(user.handid)
     hand = Hands.query.filter_by(hand_id= user.handid).first()
@@ -375,11 +391,12 @@ def split(userId):
         total = c2.value
         hand.userId = userId
         hand.value = total
-        currentCard = deck.pop()
-        cardSplit = currentCard.split(" of ")
-        val = cardSplit[0]
-        symbol = cardSplit[1]
-        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        c_id = getCard()
+        #currentCard = deck.pop()
+        #cardSplit = currentCard.split(" of ")
+        #val = cardSplit[0]
+        #symbol = cardSplit[1]
+        card = Card.query.filter_by(card_id = c_id).first()
         card.dealt = 1
         hand.cardTwo = card.card_id
         hand.value += card.value
@@ -389,11 +406,12 @@ def split(userId):
         db.session.commit()
 
         originalHand.value = c1.value
-        currentCard = deck.pop()
-        cardSplit = currentCard.split(" of ")
-        val = cardSplit[0]
-        symbol = cardSplit[1]
-        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        c_id = getCard()
+        #currentCard = deck.pop()
+        #cardSplit = currentCard.split(" of ")
+        #val = cardSplit[0]
+        #symbol = cardSplit[1]
+        card = Card.query.filter_by(card_id = c_id).first()
         card.dealt = 1
         originalHand.cardTwo = card.card_id
         total = card.value
@@ -422,11 +440,12 @@ def dealerLogic(dealerId):
     dealerHand = Hands.query.filter_by(dealerId=dealerId).first()
     value = dealerHand.value
     if value < 17:
-        currentCard = deck.pop()
-        cardSplit = currentCard.split(" of ")
-        val = cardSplit[0]
-        symbol = cardSplit[1]
-        card = Card.query.filter_by(symbol=val, suit=symbol).first()
+        c_id = getCard()
+        #currentCard = deck.pop()
+        #cardSplit = currentCard.split(" of ")
+        #val = cardSplit[0]
+        #symbol = cardSplit[1]
+        card = Card.query.filter_by(card_id = c_id).first()
         card.dealt = 1
         dealerHand.cardThree = card.card_id
         dealerHand.value += card.value
