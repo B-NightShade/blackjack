@@ -103,7 +103,11 @@ def getCard():
 
 def deal(players):
     global dealt
+    global amountPlaying
+
+    amountPlaying = amountPlaying + 1
     print("dealing")
+
     for player in players:
         c_id = getCard()
         #currentCard = deck.pop()
@@ -171,6 +175,9 @@ reloadFirstDeal = False
 dealt = False
 index = 0
 dl = False
+amountInGame = 0
+amountPlaying = 1
+addMore = True
 
 @app.route('/', methods=['GET','POST'])
 def home():
@@ -190,7 +197,11 @@ def home():
                     print("here")
                     a = True #if login successful
                     b = False #no longer needs login form
-            return render_template('home.html', a=a, b=b)
+                    c = False
+                    if addMore == False:
+                        c = True
+                        a = False
+            return render_template('home.html', a=a, b=b,c=c)
         else:
             return redirect('/game')
     return render_template('home.html', a=a, b=b)
@@ -205,6 +216,9 @@ def game():
     global index
     global dl
     global buttonPressed
+    global amountPlaying
+    global amountInGame
+    global addMore
 
     betting = True
     if request.method == "POST":
@@ -217,7 +231,13 @@ def game():
         db.session.commit()
         numberPlaying = User.query.filter_by(playing=1).count()
         numberBet = User.query.filter_by(personBet=1).count()
+        amountInGame = numberBet
+        print("amount in game = "+ str(amountInGame))
+        print("amount playing = "+ str(amountPlaying))
         if (numberPlaying == numberBet):
+            if amountInGame == amountPlaying:
+                addMore = False
+                print("addmore is false")
             if (reloadFirstDeal == False and dealt == False):
                 print("ready to deal")
                 playing =  User.query.filter_by(playing=1)
@@ -551,9 +571,23 @@ def reloadOnce():
 @socketio.on("gameRepeat")
 def gameRepeat():
     global buttonPressed
+    global reloadFirstDeal
+    global dealt
+    global index
+    global dl
+    global addMore
+    global amountInGame
+    global amountPlaying
     buttonPressed = True
     print("repeat")
     databaseReset()
+    reloadFirstDeal = False
+    dealt = False
+    index = 0
+    dl = False
+    addMore = True
+    amountInGame = 0
+    amountPlaying = 1
     return redirect(url_for('game'))
     print("Did not redirect")
 
