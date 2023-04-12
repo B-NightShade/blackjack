@@ -36,7 +36,6 @@ class Card(db.Model):
     image = db.Column(db.String(100))
     back = db.Column(db.String(100))
 
-
 class User(UserMixin, db.Model):
     id = db.Column('user_id', db.Integer, primary_key = True)
     username = db.Column(db.String(100))
@@ -83,7 +82,6 @@ for i in range(0,3):
             deck.append(str(v) + " of " + s)
 random.shuffle(deck)
 '''
-
 def getVal(symbol):
     if symbol == "jack" or symbol == "queen" or symbol == "king":
         value = 10
@@ -361,13 +359,11 @@ def game():
     db.session.commit()
     return render_template("game.html", user = user, betting = betting)
 
-
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('home'))
-
 
 def hit(uid):
     #print("in hit")
@@ -588,8 +584,8 @@ def gameRepeat():
     addMore = True
     amountInGame = 0
     amountPlaying = 1
-    return redirect(url_for('game'))
-    print("Did not redirect")
+    socketio.emit("gameToRepeat")
+    #return redirect(url_for('game'))
 
 @socketio.on("gameReset")
 def gameReset():
@@ -597,6 +593,7 @@ def gameReset():
     buttonPressed = True
     print("reset")
     databaseReset()
+    socketio.emit("gameToLogout")
 
 @socketio.on("gameLogOut")
 def gameReset():
@@ -605,7 +602,7 @@ def gameReset():
         print("logout")
         databaseReset()
         #socketio.emit('logout')
-        return redirect(url_for('logout'))
+        socketio.emit("gameToLogout")
 
 
 def databaseReset():

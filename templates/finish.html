@@ -40,7 +40,7 @@
     socket.emit('con', {data: 'I\'m connected!'})
 
  });
-setTimeout(gameLogOut, 5000)
+setTimeout(gameLogOut, 50000)
 
  function gameRepeat(){
     socket.emit("gameRepeat")
@@ -52,6 +52,16 @@ setTimeout(gameLogOut, 5000)
  function gameLogOut(){
     socket.emit("gameLogOut")
  }
+
+     socket.on("gameToRepeat", function(){
+         console.log("Gonna Move it Move it!")
+         location.href = "/game";
+    })
+
+      socket.on("gameToLogout", function(){
+         console.log("Gonna Move it Move it!")
+         location.href = "/logout";
+    })
 </script>
 
 
