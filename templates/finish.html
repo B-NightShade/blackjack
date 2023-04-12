@@ -36,18 +36,32 @@
 
 
  socket.on('connect', function(){
- console.log("CONNECTED!")
- socket.emit('con', {data: 'I\'m connected!'})
+    console.log("CONNECTED!")
+    socket.emit('con', {data: 'I\'m connected!'})
 
  });
-
+setTimeout(gameLogOut, 50000)
 
  function gameRepeat(){
- socket.emit("gameRepeat")
+    socket.emit("gameRepeat")
  }
  function gameReset(){
- socket.emit("gameReset")
+    socket.emit("gameReset")
  }
+
+ function gameLogOut(){
+    socket.emit("gameLogOut")
+ }
+
+     socket.on("gameToRepeat", function(){
+         console.log("Gonna Move it Move it!")
+         location.href = "/game";
+    })
+
+      socket.on("gameToLogout", function(){
+         console.log("Gonna Move it Move it!")
+         location.href = "/logout";
+    })
 </script>
 
 

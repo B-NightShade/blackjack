@@ -36,7 +36,6 @@ class Card(db.Model):
     image = db.Column(db.String(100))
     back = db.Column(db.String(100))
 
-
 class User(UserMixin, db.Model):
     id = db.Column('user_id', db.Integer, primary_key = True)
     username = db.Column(db.String(100))
@@ -83,7 +82,6 @@ for i in range(0,3):
             deck.append(str(v) + " of " + s)
 random.shuffle(deck)
 '''
-
 def getVal(symbol):
     if symbol == "jack" or symbol == "queen" or symbol == "king":
         value = 10
@@ -103,7 +101,11 @@ def getCard():
 
 def deal(players):
     global dealt
+    global amountPlaying
+
+    amountPlaying = amountPlaying + 1
     print("dealing")
+
     for player in players:
         c_id = getCard()
         #currentCard = deck.pop()
@@ -171,6 +173,9 @@ reloadFirstDeal = False
 dealt = False
 index = 0
 dl = False
+amountInGame = 0
+amountPlaying = 1
+addMore = True
 
 @app.route('/', methods=['GET','POST'])
 def home():
@@ -190,7 +195,11 @@ def home():
                     print("here")
                     a = True #if login successful
                     b = False #no longer needs login form
-            return render_template('home.html', a=a, b=b)
+                    c = False
+                    if addMore == False:
+                        c = True
+                        a = False
+            return render_template('home.html', a=a, b=b,c=c)
         else:
             return redirect('/game')
     return render_template('home.html', a=a, b=b)
@@ -204,6 +213,11 @@ def game():
     global dealt
     global index
     global dl
+    global buttonPressed
+    global amountPlaying
+    global amountInGame
+    global addMore
+
     betting = True
     if request.method == "POST":
         userid = current_user.id
@@ -215,7 +229,13 @@ def game():
         db.session.commit()
         numberPlaying = User.query.filter_by(playing=1).count()
         numberBet = User.query.filter_by(personBet=1).count()
+        amountInGame = numberBet
+        print("amount in game = "+ str(amountInGame))
+        print("amount playing = "+ str(amountPlaying))
         if (numberPlaying == numberBet):
+            if amountInGame == amountPlaying:
+                addMore = False
+                print("addmore is false")
             if (reloadFirstDeal == False and dealt == False):
                 print("ready to deal")
                 playing =  User.query.filter_by(playing=1)
@@ -326,6 +346,7 @@ def game():
                 if card != None:
                     dealers.append(card.image)
                 #socketio.emit("reload")
+                buttonPressed = False
                 win = wincondtions(current_user.id, 1)
                 print(yourHands)
                 return render_template("finish.html", user = user, yourHands = yourHands, others = others, dealers = dealers, e=e, win=win)
@@ -338,13 +359,11 @@ def game():
     db.session.commit()
     return render_template("game.html", user = user, betting = betting)
 
-
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('home'))
-
 
 def hit(uid):
     #print("in hit")
@@ -547,14 +566,44 @@ def reloadOnce():
 
 @socketio.on("gameRepeat")
 def gameRepeat():
+    global buttonPressed
+    global reloadFirstDeal
+    global dealt
+    global index
+    global dl
+    global addMore
+    global amountInGame
+    global amountPlaying
+    buttonPressed = True
     print("repeat")
     databaseReset()
-    return redirect('/game')
+    reloadFirstDeal = False
+    dealt = False
+    index = 0
+    dl = False
+    addMore = True
+    amountInGame = 0
+    amountPlaying = 1
+    socketio.emit("gameToRepeat")
+    #return redirect(url_for('game'))
 
 @socketio.on("gameReset")
 def gameReset():
+    global buttonPressed
+    buttonPressed = True
     print("reset")
     databaseReset()
+    socketio.emit("gameToLogout")
+
+@socketio.on("gameLogOut")
+def gameReset():
+    global buttonPressed
+    if buttonPressed == False:
+        print("logout")
+        databaseReset()
+        #socketio.emit('logout')
+        socketio.emit("gameToLogout")
+
 
 def databaseReset():
     numberPlaying = User.query.all()
@@ -565,6 +614,7 @@ def databaseReset():
     User.query.filter_by(playing=1).update({'playing': 0})
     db.session.commit()
     Card.query.filter_by(dealt=1).update({'dealt': 0})
+    Card.query.filter_by(dealt=2).update({'dealt': 0})
     db.session.commit()
     db.session.execute('DELETE FROM Hands')
     db.session.commit()
