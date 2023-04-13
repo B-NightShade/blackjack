@@ -12,8 +12,17 @@
     {% endif %}
 
     {% if a %}
+        <p>If you want multiplayer wait for all to sign in</p>
         <form method="POST">
             <input type="submit" value="Table One" onsubmit="checkFull()">
+            <input type="hidden" id = "tableOne" name="buttonType" value="table">
+        </form>
+    {% endif %}
+
+    {% if c %}
+        <p>Game In Progress</p>
+        <form method="POST">
+            <input type="submit" value="Table One" disabled="true">
             <input type="hidden" id = "tableOne" name="buttonType" value="table">
         </form>
     {% endif %}
