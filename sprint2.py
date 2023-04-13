@@ -60,6 +60,7 @@ class Hands(db.Model):
     cardFour = db.Column(db.Integer)
     cardFive = db.Column(db.Integer)
     value = db.Column(db.Integer)
+    done = db.Column(db.Integer)
 
 user = User()
 
@@ -95,6 +96,7 @@ def deal(players):
         card.dealt = 1
         hand = Hands()
         hand.cardOne = card.card_id
+        hand.done = 0
         total = card.value
 
         c_id = getCard()
@@ -114,6 +116,7 @@ def deal(players):
     card = Card.query.filter_by(card_id = c_id).first()
     card.dealt = 1
     hand.cardOne = card.card_id
+    hand.done = 0
     dealerTotal = card.value
     
     c_id = getCard()
@@ -128,12 +131,21 @@ def deal(players):
     dealt = True
 
 def getSessionsPlaying():
+    #change this to playing hands
+    '''
     playing =  User.query.filter_by(playing=1)
     sessions = []
     for player in playing:
         if player.bust != 1:
             sessions.append(player.session)
-    return sessions
+    '''
+    viableHands = Hands.query.filter_by(done = 0)
+    hands = []
+    for hand in viableHands:
+        if (hand.dealerId != 1):
+            hands.append(hand.hand_id)
+    print(hands)
+    return hands
 
 connected = 0
 reloadFirstDeal = False
@@ -260,7 +272,7 @@ def game():
                     others.append(cardsCopy)
                     cards.clear()
                     
-                    if player.splitHand != None:
+                    if(player.splitHand != None):
                         splitOffHand = Hands.query.filter_by(hand_id= player.splitHand).first()
                         card = Card.query.filter_by(card_id = splitOffHand.cardOne).first()
                         card2 = Card.query.filter_by(card_id = splitOffHand.cardTwo).first()
@@ -298,9 +310,13 @@ def game():
                 win = wincondtions(current_user.id, 1)
                 print(yourHands)
                 return render_template("finish.html", user = user, yourHands = yourHands, others = others, dealers = dealers, e=e, win=win)
-            if(current_user.session == sessions[index] and len(sessions) != 0):
+            #if user.hand or user.split =sessions[index]
+            if(current_user.handid == sessions[index] and len(sessions) != 0):
                 e = True
                 return render_template("game.html", user = user, yourHands = yourHands, others = others, dealers = dealers, betting = betting, e =e)
+            if(current_user.splitHand == sessions[index] and len(sessions) != 0):
+                split = True
+                return render_template("game.html", user = user, yourHands = yourHands, others = others, dealers = dealers, betting = betting, split=split)
             return render_template("game.html", user = user, yourHands = yourHands, others = others, dealers = dealers, betting = betting, e=e)
 
     User.query.filter_by(id=user.id).update({'playing':1})
@@ -316,12 +332,10 @@ def logout():
 
 
 def hit(uid):
-    #print("in hit")
     user = User.query.filter_by(id = uid).first()
     c_id = getCard()
     card = Card.query.filter_by(card_id = c_id).first()
     card.dealt = 1
-    #print(user.handid)
     hand = Hands.query.filter_by(hand_id= user.handid).first()
     if hand.cardThree == None:
         hand.cardThree = card.card_id
@@ -339,11 +353,77 @@ def hit(uid):
         c3 = Card.query.filter_by(card_id = hand.cardThree).first()
         c4 = Card.query.filter_by(card_id = hand.cardFour).first()
         c5 = Card.query.filter_by(card_id = hand.cardFive).first()
-        if(c1.symbol=='ace' or c2.symbol=='ace' or c3.symbol=='ace' or c4.symbol=='ace' or c5.symbol=='ace'):
+        if(c1.symbol=='ace' and c1.dealt !=2):
             hand.value = hand.value - 10
+            c1.dealt =2
+            db.session.commit()
+        elif(c2.symbol=='ace' and c2.dealt != 2 and hand.value >21):
+            hand.value = hand.value - 10
+            c2.dealt =2
+            db.session.commit()
+        elif(c3.symbol=='ace' and c3.dealt != 2 and hand.value >21):
+            hand.value = hand.value - 10
+            c3.dealt =2
+            db.session.commit()
+        elif(c4.symbol=='ace' and c4.dealt != 2 and hand.value >21):
+            hand.value = hand.value - 10
+            c4.dealt =2
+            db.session.commit()
+        elif(c5.symbol=='ace' and c5.dealt != 2 and hand.value >21):
+            hand.value = hand.value - 10
+            c5.dealt =2
             db.session.commit()
         else:
-            user.bust = 1
+            #user.bust = 1
+            hand.done = 1
+            db.session.commit()
+    reload()
+    
+def hitsplit(uid):
+    user = User.query.filter_by(id = uid).first()
+    c_id = getCard()
+    card = Card.query.filter_by(card_id = c_id).first()
+    card.dealt = 1
+    hand = Hands.query.filter_by(hand_id= user.splitHand).first()
+    if hand.cardThree == None:
+        hand.cardThree = card.card_id
+        hand.value += card.value
+    elif hand.cardFour == None:
+        hand.cardFour = card.card_id
+        hand.value += card.value
+    else:
+        hand.cardFive = card.card_id
+        hand.value += card.value
+    db.session.commit()
+    if (hand.value > 21):
+        c1 = Card.query.filter_by(card_id = hand.cardOne).first()
+        c2 = Card.query.filter_by(card_id = hand.cardTwo).first()
+        c3 = Card.query.filter_by(card_id = hand.cardThree).first()
+        c4 = Card.query.filter_by(card_id = hand.cardFour).first()
+        c5 = Card.query.filter_by(card_id = hand.cardFive).first()
+        if(c1.symbol=='ace' and c1.dealt !=2):
+            hand.value = hand.value - 10
+            c1.dealt =2
+            db.session.commit()
+        elif(c2.symbol=='ace' and c2.dealt != 2 and hand.value >21):
+            hand.value = hand.value - 10
+            c2.dealt =2
+            db.session.commit()
+        elif(c3.symbol=='ace' and c3.dealt != 2 and hand.value >21):
+            hand.value = hand.value - 10
+            c3.dealt =2
+            db.session.commit()
+        elif(c4.symbol=='ace' and c4.dealt != 2 and hand.value >21):
+            hand.value = hand.value - 10
+            c4.dealt =2
+            db.session.commit()
+        elif(c5.symbol=='ace' and c5.dealt != 2 and hand.value >21):
+            hand.value = hand.value - 10
+            c5.dealt =2
+            db.session.commit()
+        else:
+            #user.bust = 1
+            hand.done = 1
             db.session.commit()
     reload()
 
@@ -361,6 +441,7 @@ def split(userId):
     if c1.value == c2.value:
         print("split valid")
         hand = Hands()
+        hand.done = 0
         hand.cardOne = c2.card_id
         total = c2.value
         hand.userId = userId
@@ -386,17 +467,34 @@ def split(userId):
         
         index += 1
         count = 0
+        viableHands = Hands.query.filter_by(done = 0)
+        for hand in viableHands:
+            if (hand.dealerId != 1):
+                if(hand.done != 1):
+                    count += 1
+        if (index > count-1):
+            index = 0
+        '''
         playing =  User.query.filter_by(playing=1)
         for player in playing:
             if player.bust != 1:
                 count += 1
         if (index > count-1):
             index = 0
+        '''
         reload()
 
 def stand(userId):
     user = User.query.filter_by(id = userId).first()
-    user.bust = 1
+    hand = Hands.query.filter_by(hand_id = user.handid).first()
+    hand.done = 1
+    db.session.commit()
+    reload()
+
+def standsplit(userId):
+    user = User.query.filter_by(id = userId).first()
+    hand = Hands.query.filter_by(hand_id = user.splitHand).first()
+    hand.done = 1
     db.session.commit()
     reload()
 
@@ -424,15 +522,20 @@ def wincondtions(uid, dealerId):
 
     if (userValue >= 22):  # bust
         user.cash = user.cash - userBet
+        return "lost"
     elif (dealerValue >= 22 and userValue < 22):  # no bust and dealer busts
         user.cash = user.cash + userBet
+        return "win"
     elif (userValue >= dealerValue and userValue < 22):  # no bust and better than dealer
         user.cash = user.cash + userBet
+        return "win"
     elif (userValue < dealerValue or userValue > 22):  # no bust and worse than dealer
         user.cash = user.cash - userBet
+        return "lost"
     elif (userValue == 21):
         userBet = userBet + userBet / 2
         user.cash = user.cash + (userBet)
+        return "win"
     db.session.commit()
 
 @socketio.on("betMoney")
@@ -450,12 +553,21 @@ def handle_hit():
     hit(current_user.id)
     index += 1
     count = 0
+    viableHands = Hands.query.filter_by(done = 0)
+    for hand in viableHands:
+        if (hand.dealerId != 1):
+            if(hand.done != 1):
+                count += 1
+    if (index > count-1):
+        index = 0
+    '''
     playing =  User.query.filter_by(playing=1)
     for player in playing:
         if player.bust != 1:
             count += 1
     if (index > count-1):
         index = 0
+    '''
 
 @socketio.on("stay")
 def handle_stay():
@@ -463,13 +575,64 @@ def handle_stay():
     stand(current_user.id)
     index += 1
     count = 0
+    viableHands = Hands.query.filter_by(done = 0)
+    for hand in viableHands:
+        if (hand.dealerId != 1):
+            if(hand.done != 1):
+                count += 1
+    if (index > count-1):
+        index = 0
+    '''
     playing =  User.query.filter_by(playing=1)
     for player in playing:
         if player.bust != 1:
             count += 1
     if (index > count-1):
         index = 0
+    '''
     
+@socketio.on("hitsplit")
+def handle_hitsplit():
+    global index
+    hitsplit(current_user.id)
+    index += 1
+    count = 0
+    viableHands = Hands.query.filter_by(done = 0)
+    for hand in viableHands:
+        if (hand.dealerId != 1):
+            if(hand.done != 1):
+                count += 1
+    if (index > count-1):
+        index = 0
+    '''
+    playing =  User.query.filter_by(playing=1)
+    for player in playing:
+        if player.bust != 1:
+            count += 1
+    if (index > count-1):
+        index = 0
+    '''
+
+@socketio.on("staysplit")
+def handle_staysplit():
+    global index
+    standsplit(current_user.id)
+    index += 1
+    count = 0
+    viableHands = Hands.query.filter_by(done = 0)
+    for hand in viableHands:
+        if (hand.dealerId != 1):
+            if(hand.done != 1):
+                count += 1
+    if (index > count-1):
+        index = 0
+    '''
+    playing =  User.query.filter_by(playing=1)
+    for player in playing:
+        if player.bust != 1:
+            count += 1
+    '''
+        
 @socketio.on("split")
 def handle_split():
     split(current_user.id)
@@ -535,7 +698,6 @@ def databaseReset():
 @socketio.on('disconnect')
 def handle_disconnect():
     print("disconnect")
-
 
 
 if __name__ == '__main__':

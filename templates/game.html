@@ -25,6 +25,11 @@
 <button type = "button" disabled="true" id="splitButton">Split</button>
 {% endif %}
 
+{% if split %}
+<button type = "button"  id="hitButton" onclick ="hitSplitHand()">Hit split hand</button>
+<button type = "button"  id="stayButton" onclick = "staySplitHand()">Stay split hand</button>
+{% endif %}
+
 <hr>
 <div>
 <h6>Opponents' Cards!</h6>
@@ -82,6 +87,14 @@
 
     function stay(){
         socket.emit("stay")
+    }
+
+    function hitSplitHand(){
+        socket.emit("hitsplit")
+    }
+
+    function staySplitHand(){
+        socket.emit("staysplit")
     }
 
     function split(){
