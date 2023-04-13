@@ -82,6 +82,7 @@ for i in range(0,3):
             deck.append(str(v) + " of " + s)
 random.shuffle(deck)
 '''
+
 def getVal(symbol):
     if symbol == "jack" or symbol == "queen" or symbol == "king":
         value = 10
@@ -148,13 +149,6 @@ def deal(players):
 
 def getSessionsPlaying():
     #change this to playing hands
-    '''
-    playing =  User.query.filter_by(playing=1)
-    sessions = []
-    for player in playing:
-        if player.bust != 1:
-            sessions.append(player.session)
-    '''
     viableHands = Hands.query.filter_by(done = 0)
     hands = []
     for hand in viableHands:
@@ -507,14 +501,6 @@ def split(userId):
                     count += 1
         if (index > count-1):
             index = 0
-        '''
-        playing =  User.query.filter_by(playing=1)
-        for player in playing:
-            if player.bust != 1:
-                count += 1
-        if (index > count-1):
-            index = 0
-        '''
         reload()
 
 def stand(userId):
@@ -593,14 +579,6 @@ def handle_hit():
                 count += 1
     if (index > count-1):
         index = 0
-    '''
-    playing =  User.query.filter_by(playing=1)
-    for player in playing:
-        if player.bust != 1:
-            count += 1
-    if (index > count-1):
-        index = 0
-    '''
 
 @socketio.on("stay")
 def handle_stay():
@@ -615,14 +593,6 @@ def handle_stay():
                 count += 1
     if (index > count-1):
         index = 0
-    '''
-    playing =  User.query.filter_by(playing=1)
-    for player in playing:
-        if player.bust != 1:
-            count += 1
-    if (index > count-1):
-        index = 0
-    '''
     
 @socketio.on("hitsplit")
 def handle_hitsplit():
@@ -637,14 +607,6 @@ def handle_hitsplit():
                 count += 1
     if (index > count-1):
         index = 0
-    '''
-    playing =  User.query.filter_by(playing=1)
-    for player in playing:
-        if player.bust != 1:
-            count += 1
-    if (index > count-1):
-        index = 0
-    '''
 
 @socketio.on("staysplit")
 def handle_staysplit():
@@ -659,12 +621,7 @@ def handle_staysplit():
                 count += 1
     if (index > count-1):
         index = 0
-    '''
-    playing =  User.query.filter_by(playing=1)
-    for player in playing:
-        if player.bust != 1:
-            count += 1
-    '''
+
         
 @socketio.on("split")
 def handle_split():
