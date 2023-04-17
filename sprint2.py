@@ -719,7 +719,7 @@ def gameReset():
         databaseReset()
         #socketio.emit('logout')
         socketio.emit("gameToLogout")
-
+ 
 
 def databaseReset():
     numberPlaying = User.query.all()
