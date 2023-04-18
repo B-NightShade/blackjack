@@ -461,7 +461,12 @@ def split(userId):
     originalHand = Hands.query.filter_by(hand_id= user.handid).first()
     c1 = Card.query.filter_by(card_id = cardOne).first()
     c2 = Card.query.filter_by(card_id = cardTwo).first()
-    if c1.value == c2.value:
+    print(c1.value == c2.value)
+    print(user.splitHand == None)
+    bet = user.bet
+    bet = bet * 2
+    print(bet >= user.cash)
+    if (c1.value == c2.value) and (user.splitHand == None) and ((user.bet * 2)>=user.cash):
         print("split valid")
         hand = Hands()
         hand.done = 0
@@ -698,7 +703,11 @@ def gameReset():
     socketio.emit("gameToLogout")
 
 @socketio.on("gameLogOut")
+<<<<<<< Updated upstream
 def gameLogOut():
+=======
+def gameLogOut(): #if this breaks name used to be gameReset
+>>>>>>> Stashed changes
     global buttonPressed
     if buttonPressed == False:
         print("logout")
