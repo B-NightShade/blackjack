@@ -552,7 +552,9 @@ def wincondtions(uid, dealerId):
     dealerValue = dealerHand.value
     userBet = user.bet  # need to change this
 
-    if (userValue >= 22):  # bust
+    if (userValue == dealerValue and userValue <=21): #no bust and tie
+        return "push"
+    elif (userValue >= 22):  # bust
         user.cash = user.cash - userBet
         db.session.commit()
         return "lost"
@@ -683,36 +685,20 @@ def reloadOnce():
 @socketio.on("gameRepeat")
 def gameRepeat():
     global buttonPressed
-    global reloadFirstDeal
-    global dealt
-    global index
-    global dl
-    global addMore
-    global amountInGame
-    global amountPlaying
     buttonPressed = True
     print("repeat")
     databaseReset()
-    reloadFirstDeal = False
-    dealt = False
-    index = 0
-    dl = False
-    addMore = True
-    amountInGame = 0
-    amountPlaying = 1
     socketio.emit("gameToRepeat")
     #return redirect(url_for('game'))
 
 @socketio.on("gameReset")
 def gameReset():
-    global buttonPressed
-    buttonPressed = True
     print("reset")
     databaseReset()
     socketio.emit("gameToLogout")
 
 @socketio.on("gameLogOut")
-def gameReset():
+def gameLogOut():
     global buttonPressed
     if buttonPressed == False:
         print("logout")
@@ -722,6 +708,20 @@ def gameReset():
  
 
 def databaseReset():
+    global reloadFirstDeal
+    global dealt
+    global index
+    global dl
+    global addMore
+    global amountInGame
+    global amountPlaying
+    reloadFirstDeal = False
+    dealt = False
+    index = 0
+    dl = False
+    addMore = True
+    amountInGame = 0
+    amountPlaying = 1
     numberPlaying = User.query.all()
     # numberPlaying = User.query.filter_by(playing=1).count() + 1
     User.query.filter_by(playing=1).update({'personBet': 0})
