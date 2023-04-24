@@ -1,6 +1,7 @@
 <html>
 <h4>{{ current_user.username }} Cards!</h4>
-<p>{{ win }}</p>
+<p>your original hand: {{ win }}</p>
+<p>your split hand: {{ splitEnd }}</p>
 <p>Your cash: {{ current_user.cash }}</p>
 <h5>Play Again?</h5>
 <button type = "button"  id="playAgain" onclick ="gameRepeat()">Yes</button>
@@ -14,16 +15,15 @@
 {% endfor %}
 <br>
 
-
 <hr>
 <h6>Opponents' Cards!</h6>
 {% for hand in others %}
     {% for card in hand %}
         <img src={{card}} width ="50px">
     {% endfor %}
-<hr>
 {% endfor %}
 <hr>
+
 
 <h6>Dealer Cards</h6>
 {% for card in dealers %}

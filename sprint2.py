@@ -158,6 +158,7 @@ def home():
     global user
     a= False
     b = True ##needs login form
+    c = False
     if request.method == "POST":
         button = request.form['buttonType']
         if button == 'loginForm':
@@ -331,7 +332,8 @@ def game():
                 buttonPressed = False
                 win = wincondtions(current_user.id, 1)
                 print(yourHands)
-                return render_template("finish.html", user = user, yourHands = yourHands, others = others, dealers = dealers, e=e, win=win)
+                splitEnd = splitWinConditions(current_user.id,1)
+                return render_template("finish.html", user = user, yourHands = yourHands, others = others, dealers = dealers, e=e, win=win, splitEnd=splitEnd)
             #if user.hand or user.split =sessions[index]
             if(current_user.handid == sessions[index] and len(sessions) != 0):
                 e = True
@@ -432,18 +434,21 @@ def hitsplit(uid):
             hand.value = hand.value - 10
             c2.dealt =2
             db.session.commit()
-        elif(c3.symbol=='ace' and c3.dealt != 2 and hand.value >21):
-            hand.value = hand.value - 10
-            c3.dealt =2
-            db.session.commit()
-        elif(c4.symbol=='ace' and c4.dealt != 2 and hand.value >21):
-            hand.value = hand.value - 10
-            c4.dealt =2
-            db.session.commit()
-        elif(c5.symbol=='ace' and c5.dealt != 2 and hand.value >21):
-            hand.value = hand.value - 10
-            c5.dealt =2
-            db.session.commit()
+        if(c3 != None):
+            if(c3.symbol=='ace' and c3.dealt != 2 and hand.value >21):
+                hand.value = hand.value - 10
+                c3.dealt =2
+                db.session.commit()
+        if(c4 != None):
+            if(c4.symbol=='ace' and c4.dealt != 2 and hand.value >21):
+                hand.value = hand.value - 10
+                c4.dealt =2
+                db.session.commit()
+        if(c5 != None):
+            if(c5.symbol=='ace' and c5.dealt != 2 and hand.value >21):
+                hand.value = hand.value - 10
+                c5.dealt =2
+                db.session.commit()
         else:
             #user.bust = 1
             hand.done = 1
@@ -461,12 +466,7 @@ def split(userId):
     originalHand = Hands.query.filter_by(hand_id= user.handid).first()
     c1 = Card.query.filter_by(card_id = cardOne).first()
     c2 = Card.query.filter_by(card_id = cardTwo).first()
-    print(c1.value == c2.value)
-    print(user.splitHand == None)
-    bet = user.bet
-    bet = bet * 2
-    print(bet >= user.cash)
-    if (c1.value == c2.value) and (user.splitHand == None) and ((user.bet * 2)>=user.cash):
+    if (c1.value == c2.value) and (user.splitHand == None) and ((user.bet * 2)<=user.cash):
         print("split valid")
         hand = Hands()
         hand.done = 0
@@ -581,6 +581,42 @@ def wincondtions(uid, dealerId):
         db.session.commit()
         return "win"
     db.session.commit()
+
+def splitWinConditions(uid, dealerId):
+    user = User.query.filter_by(id = uid).first()
+    if (user.splitHand != None):
+        userHand = Hands.query.filter_by(hand_id= user.splitHand).first()
+        dealerHand = Hands.query.filter_by(dealerId=dealerId).first()
+        user = User.query.filter_by(id=uid).first()
+        userValue = userHand.value
+        dealerValue = dealerHand.value
+        userBet = user.bet  # need to change this
+    
+        if (userValue == dealerValue and userValue <=21): #no bust and tie
+            return "push"
+        elif (userValue >= 22):  # bust
+            user.cash = user.cash - userBet
+            db.session.commit()
+            return "lost"
+        elif (dealerValue >= 22 and userValue < 22):  # no bust and dealer busts
+            user.cash = user.cash + userBet
+            db.session.commit()
+            return "win"
+        elif (userValue >= dealerValue and userValue < 22):  # no bust and better than dealer
+            user.cash = user.cash + userBet
+            db.session.commit()
+            return "win"
+        elif (userValue < dealerValue or userValue > 22):  # no bust and worse than dealer
+            user.cash = user.cash - userBet
+            db.session.commit()
+            return "lost"
+        elif (userValue == 21):
+            userBet = userBet + userBet / 2
+            user.cash = user.cash + (userBet)
+            db.session.commit()
+            return "win"
+        db.session.commit()
+    return "none"
 
 @socketio.on("betMoney")
 def getBet(uid, bet):
@@ -703,11 +739,7 @@ def gameReset():
     socketio.emit("gameToLogout")
 
 @socketio.on("gameLogOut")
-<<<<<<< Updated upstream
-def gameLogOut():
-=======
 def gameLogOut(): #if this breaks name used to be gameReset
->>>>>>> Stashed changes
     global buttonPressed
     if buttonPressed == False:
         print("logout")
