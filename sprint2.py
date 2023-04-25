@@ -6,13 +6,11 @@ This is a temporary script file.
 """
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import null
 from waitress import serve
 from flask_socketio import SocketIO, join_room, leave_room
 from flask_login import LoginManager, UserMixin, login_user, \
     logout_user, current_user, login_required
-
-
+import threading
 
 
 app = Flask(__name__, static_url_path='/static')
@@ -62,12 +60,14 @@ class Hands(db.Model):
     done = db.Column(db.Integer)
 
 user = User()
+lock = threading.Lock()
 
 @login_manager.user_loader
-def load_user(uid):
+def load_user(uid): 
     global user
     user = User.query.get(uid)
     return user
+    
 
 
 def getVal(symbol):
@@ -85,6 +85,7 @@ def getCard():
     for row in c:
         c_id = row["card_id"]
         print(c_id)
+    
     return c_id
 
 def deal(players):
@@ -93,7 +94,7 @@ def deal(players):
 
     amountPlaying = amountPlaying + 1
     print("dealing")
-
+    
     for player in players:
         c_id = getCard()
         card = Card.query.filter_by(card_id = c_id).first()
@@ -197,6 +198,7 @@ def game():
 
     betting = True
     if request.method == "POST":
+        lock.acquire();
         userid = current_user.id
         user = User.query.filter_by(id=userid).first()
         User.query.filter_by(id=userid).update({'personBet':1})
@@ -204,6 +206,7 @@ def game():
         User.query.filter_by(id=userid).update({'bet':userBet})
 
         db.session.commit()
+        lock.release()
         numberPlaying = User.query.filter_by(playing=1).count()
         numberBet = User.query.filter_by(personBet=1).count()
         amountInGame = numberBet
@@ -218,12 +221,13 @@ def game():
                 playing =  User.query.filter_by(playing=1)
                 deal(playing)
                 socketio.emit("reload")
-
+        
 
             betting = False
             yourHands = []
             yourHand = []
             sHand = []
+            lock.acquire()
             user = User.query.filter_by(id=current_user.id).first()
             Hand = Hands.query.filter_by(hand_id= user.handid).first()
             card = Card.query.filter_by(card_id = Hand.cardOne).first()
@@ -306,7 +310,7 @@ def game():
                         copySplit = scards.copy()
                         others.append(copySplit)
                         scards.clear()
-                        
+            lock.release()          
             e=False
             sessions = getSessionsPlaying()
             print(sessions)
@@ -314,6 +318,7 @@ def game():
                 if (dl == False):
                     dealerLogic(1)
                 dealers = []
+                lock.acquire()
                 dealer = Hands.query.filter_by(dealerId = 1).first()
                 card = Card.query.filter_by(card_id = dealer.cardOne).first()
                 dealers.append(card.image)
@@ -333,6 +338,7 @@ def game():
                 win = wincondtions(current_user.id, 1)
                 print(yourHands)
                 splitEnd = splitWinConditions(current_user.id,1)
+                lock.release()
                 return render_template("finish.html", user = user, yourHands = yourHands, others = others, dealers = dealers, e=e, win=win, splitEnd=splitEnd)
             #if user.hand or user.split =sessions[index]
             if(current_user.handid == sessions[index] and len(sessions) != 0):
@@ -342,7 +348,6 @@ def game():
                 split = True
                 return render_template("game.html", user = user, yourHands = yourHands, others = others, dealers = dealers, betting = betting, split=split)
             return render_template("game.html", user = user, yourHands = yourHands, others = others, dealers = dealers, betting = betting, e=e)
-
     User.query.filter_by(id=user.id).update({'playing':1})
     db.session.commit()
     return render_template("game.html", user = user, betting = betting)
@@ -690,6 +695,7 @@ def handle_staysplit():
 def handle_split():
     split(current_user.id)
 
+
 @socketio.on('con')
 def handle_connection(data):
     print(data['data'])
@@ -701,6 +707,7 @@ def handle_player():
     print("connected to game")
     User.query.filter_by(id=user.id).update({'session':request.sid})
     db.session.commit()
+
 
 
 @socketio.on("test")
