@@ -523,6 +523,7 @@ def standsplit(userId):
     db.session.commit()
     reload()
 
+
 def dealerLogic(dealerId):
     global dl
     dl = True
@@ -530,29 +531,53 @@ def dealerLogic(dealerId):
     value = dealerHand.value
     if value < 17:
         c_id = getCard()
-        card = Card.query.filter_by(card_id = c_id).first()
+        card = Card.query.filter_by(card_id=c_id).first()
         card.dealt = 1
         dealerHand.cardThree = card.card_id
         dealerHand.value += card.value
         db.session.commit()
+        if dealerHand.cardThree == 'ace' and value < 21:
+            dealerHand.value = dealerHand.value - 10
+            card.dealt = 2
+            db.session.commit()
     dealerHand = Hands.query.filter_by(dealerId=dealerId).first()
     value = dealerHand.value
     if value < 17:
         c_id = getCard()
-        card = Card.query.filter_by(card_id = c_id).first()
+        card = Card.query.filter_by(card_id=c_id).first()
         card.dealt = 1
         dealerHand.cardFour = card.card_id
         dealerHand.value += card.value
         db.session.commit()
+        if dealerHand.cardThree == 'ace' and value < 21:
+            dealerHand.value = dealerHand.value - 10
+            card.dealt = 2
+            db.session.commit()
+        if dealerHand.cardFour == 'ace' and value < 21:
+            dealerHand.value = dealerHand.value - 10
+            card.dealt = 2
+            db.session.commit()
     dealerHand = Hands.query.filter_by(dealerId=dealerId).first()
     value = dealerHand.value
     if value < 17:
         c_id = getCard()
-        card = Card.query.filter_by(card_id = c_id).first()
+        card = Card.query.filter_by(card_id=c_id).first()
         card.dealt = 1
         dealerHand.cardFive = card.card_id
         dealerHand.value += card.value
         db.session.commit()
+        if dealerHand.cardThree == 'ace' and value < 21:
+            dealerHand.value = dealerHand.value - 10
+            card.dealt = 2
+            db.session.commit()
+        if dealerHand.cardFour == 'ace' and value < 21:
+            dealerHand.value = dealerHand.value - 10
+            card.dealt = 2
+            db.session.commit()
+        if dealerHand.cardFive == 'ace' and value < 21:
+            dealerHand.value = dealerHand.value - 10
+            card.dealt = 2
+            db.session.commit()
 
 def wincondtions(uid, dealerId):
     userHand = Hands.query.filter_by(userId=uid).first()
