@@ -656,6 +656,12 @@ def splitWinConditions(uid, dealerId):
         db.session.commit()
     return "none"
 
+@socketio.on("beginningOfGame")
+def beginningOfGame():
+    print("game start")
+    databaseReset()
+
+
 @socketio.on("betMoney")
 def getBet(uid, bet):
     User.query.filter_by(id=uid).update({'bet': bet})
