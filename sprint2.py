@@ -158,7 +158,7 @@ addMore = True
 def home():
     global user
     a= False
-    b = True ##needs login form
+    #b = True ##needs login form
     c = False
     if request.method == "POST":
         button = request.form['buttonType']
@@ -172,15 +172,23 @@ def home():
                     login_user(user)
                     print("here")
                     a = True #if login successful
-                    b = False #no longer needs login form
+                    #b = False #no longer needs login form
                     c = False
                     if addMore == False:
                         c = True
                         a = False
-            return render_template('home.html', a=a, b=b,c=c)
+                    tableSize = User.query.filter_by(playing=1).count()
+                    if (tableSize >= 3):
+                        c = True
+                        a = False
+                    return render_template('home.html', a=a,c=c)
+                else:
+                    return render_template('login.html')
+            else:
+                return render_template('login.html')
         else:
             return redirect('/game')
-    return render_template('home.html', a=a, b=b)
+    return render_template('login.html')
 
 @app.route('/game', methods=['GET','POST'])
 @login_required
