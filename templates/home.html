@@ -43,8 +43,11 @@
         socket.on('connect', function(){
             console.log("CONNECTED!")
             socket.emit('con', {data: 'I\'m connected!'})
+            socket.emit("beginningOfGame")
     
         });
+
+
 
         function checkfull(){
             console.log("checkfull")
