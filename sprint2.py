@@ -153,6 +153,7 @@ dl = False
 amountInGame = 0
 amountPlaying = 1
 addMore = True
+firstPlayer = 0
 
 @app.route('/', methods=['GET','POST'])
 def home():
@@ -203,6 +204,7 @@ def game():
     global amountPlaying
     global amountInGame
     global addMore
+    global firstPlayer
 
     betting = True
     if request.method == "POST":
@@ -658,8 +660,11 @@ def splitWinConditions(uid, dealerId):
 
 @socketio.on("beginningOfGame")
 def beginningOfGame():
-    print("game start")
-    databaseReset()
+    global firstPlayer
+    if firstPlayer == 0:
+        print("game start")
+        databaseReset()
+        firstPlayer = firstPlayer + 1
 
 
 @socketio.on("betMoney")
