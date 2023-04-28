@@ -65,6 +65,11 @@
         location.reload()
     })
 
+    socket.on("reloadEnd", function(){
+        socket.emit("end")
+        location.reload()
+    })
+
 
     socket.on("activate", function(){
         hitButton.disabled = false
