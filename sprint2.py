@@ -362,8 +362,10 @@ def game():
                 split = True
                 return render_template("game.html", user = user, yourHands = yourHands, others = others, dealers = dealers, betting = betting, split=split)
             return render_template("game.html", user = user, yourHands = yourHands, others = others, dealers = dealers, betting = betting, e=e)
+    lock.acquire()
     User.query.filter_by(id=user.id).update({'playing':1})
     db.session.commit()
+    lock.release()
     return render_template("game.html", user = user, betting = betting)
 
 @app.route('/logout')
