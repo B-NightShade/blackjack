@@ -34,9 +34,11 @@
 <div>
 <h6>Opponents' Cards!</h6>
 {% for hand in others %}
+<div id="divActivites" name="divActivites" style="border:1px solid black; display:inline-block;width:fit-content">
     {% for card in hand %}
         <img src={{card}} width ="50px">
     {% endfor %}
+</div>
 {% endfor %}
 <br>
 <hr>
@@ -62,6 +64,11 @@
 
     socket.on("reload", function(){
         socket.emit("dealOne")
+        location.reload()
+    })
+
+    socket.on("reloadEnd", function(){
+        socket.emit("end")
         location.reload()
     })
 

@@ -154,6 +154,8 @@ amountInGame = 0
 amountPlaying = 1
 addMore = True
 firstPlayer = 0
+reloadEnd = False
+
 
 @app.route('/', methods=['GET','POST'])
 def home():
@@ -179,7 +181,7 @@ def home():
                         c = True
                         a = False
                     tableSize = User.query.filter_by(playing=1).count()
-                    if (tableSize >= 3):
+                    if (tableSize >= 5):
                         c = True
                         a = False
                     return render_template('home.html', a=a,c=c)
@@ -205,7 +207,7 @@ def game():
     global amountInGame
     global addMore
     global firstPlayer
-
+    global reloadEnd
     betting = True
     if request.method == "POST":
         lock.acquire();
@@ -353,13 +355,17 @@ def game():
             #if user.hand or user.split =sessions[index]
             if(current_user.handid == sessions[index] and len(sessions) != 0):
                 e = True
+                if(reloadEnd == False):
+                    socketio.emit("reloadEnd")
                 return render_template("game.html", user = user, yourHands = yourHands, others = others, dealers = dealers, betting = betting, e =e)
             if(current_user.splitHand == sessions[index] and len(sessions) != 0):
                 split = True
                 return render_template("game.html", user = user, yourHands = yourHands, others = others, dealers = dealers, betting = betting, split=split)
             return render_template("game.html", user = user, yourHands = yourHands, others = others, dealers = dealers, betting = betting, e=e)
+    lock.acquire()
     User.query.filter_by(id=user.id).update({'playing':1})
     db.session.commit()
+    lock.release()
     return render_template("game.html", user = user, betting = betting)
 
 @app.route('/logout')
@@ -773,6 +779,11 @@ def reloadOnce():
     global reloadFirstDeal
     reloadFirstDeal = True
 
+@socketio.on("end")
+def endReload():
+    global reloadEnd
+    reloadEnd = True
+
 
 @socketio.on("gameRepeat")
 def gameRepeat():
@@ -807,7 +818,9 @@ def databaseReset():
     global addMore
     global amountInGame
     global amountPlaying
+    global reloadEnd
     reloadFirstDeal = False
+    reloadEnd = False
     dealt = False
     index = 0
     dl = False
