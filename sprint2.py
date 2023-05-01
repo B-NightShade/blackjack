@@ -606,22 +606,27 @@ def wincondtions(uid, dealerId):
     if (userValue == dealerValue and userValue <=21): #no bust and tie
         return "push"
     elif (userValue >= 22):  # bust
+        print("bust")
         user.cash = user.cash - userBet
         db.session.commit()
         return "lost"
-    elif (dealerValue >= 22 and userValue < 22):  # no bust and dealer busts
+    elif (dealerValue >= 22 and userValue < 21):  # no bust and dealer busts
+        print("no bust and dealer busts")
         user.cash = user.cash + userBet
         db.session.commit()
         return "win"
-    elif (userValue >= dealerValue and userValue < 22):  # no bust and better than dealer
+    elif (userValue >= dealerValue and userValue < 21):  # no bust and better than dealer
+        print("no bust and better than dealer")
         user.cash = user.cash + userBet
         db.session.commit()
         return "win"
-    elif (userValue < dealerValue or userValue > 22):  # no bust and worse than dealer
+    elif (userValue < dealerValue or userValue > 21):  # no bust and worse than dealer
+        print("no bust and worse than dealer")
         user.cash = user.cash - userBet
         db.session.commit()
         return "lost"
     elif (userValue == 21):
+        print("black jack")
         blackJackBet = userBet + userBet / 2
         user.cash = user.cash + (blackJackBet)
         db.session.commit()
@@ -641,22 +646,27 @@ def splitWinConditions(uid, dealerId):
         if (userValue == dealerValue and userValue <=21): #no bust and tie
             return "push"
         elif (userValue >= 22):  # bust
+            print("bust")
             user.cash = user.cash - userBet
             db.session.commit()
             return "lost"
-        elif (dealerValue >= 22 and userValue < 22):  # no bust and dealer busts
+        elif (dealerValue >= 22 and userValue < 21):  # no bust and dealer busts
+            print("no bust and dealer busts")
             user.cash = user.cash + userBet
             db.session.commit()
             return "win"
-        elif (userValue >= dealerValue and userValue < 22):  # no bust and better than dealer
+        elif (userValue >= dealerValue and userValue < 21):  # no bust and better than dealer
+            print("no bust and better than dealer")
             user.cash = user.cash + userBet
             db.session.commit()
             return "win"
-        elif (userValue < dealerValue or userValue > 22):  # no bust and worse than dealer
+        elif (userValue < dealerValue or userValue > 21):  # no bust and worse than dealer
+            print("no bust and worse than dealer")
             user.cash = user.cash - userBet
             db.session.commit()
             return "lost"
         elif (userValue == 21):
+            print("blackjack")
             blackJackBet = userBet + userBet / 2
             user.cash = user.cash + (blackJackBet)
             db.session.commit()
