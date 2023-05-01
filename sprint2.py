@@ -390,7 +390,7 @@ def hit(uid):
         hand.cardFive = card.card_id
         hand.value += card.value
     db.session.commit()
-    if (hand.value > 21):
+    if (hand.value >= 21):
         c1 = Card.query.filter_by(card_id = hand.cardOne).first()
         c2 = Card.query.filter_by(card_id = hand.cardTwo).first()
         c3 = Card.query.filter_by(card_id = hand.cardThree).first()
@@ -419,7 +419,7 @@ def hit(uid):
                 hand.value = hand.value - 10
                 c5.dealt =2
                 db.session.commit()
-        else:
+        if (hand.value >= 21):
             #user.bust = 1
             hand.done = 1
             db.session.commit()
@@ -441,7 +441,7 @@ def hitsplit(uid):
         hand.cardFive = card.card_id
         hand.value += card.value
     db.session.commit()
-    if (hand.value > 21):
+    if (hand.value >= 21):
         c1 = Card.query.filter_by(card_id = hand.cardOne).first()
         c2 = Card.query.filter_by(card_id = hand.cardTwo).first()
         c3 = Card.query.filter_by(card_id = hand.cardThree).first()
@@ -470,7 +470,7 @@ def hitsplit(uid):
                 hand.value = hand.value - 10
                 c5.dealt =2
                 db.session.commit()
-        else:
+        if (hand.value >=21):
             #user.bust = 1
             hand.done = 1
             db.session.commit()
@@ -622,8 +622,8 @@ def wincondtions(uid, dealerId):
         db.session.commit()
         return "lost"
     elif (userValue == 21):
-        userBet = userBet + userBet / 2
-        user.cash = user.cash + (userBet)
+        blackJackBet = userBet + userBet / 2
+        user.cash = user.cash + (blackJackBet)
         db.session.commit()
         return "win"
     db.session.commit()
@@ -657,8 +657,8 @@ def splitWinConditions(uid, dealerId):
             db.session.commit()
             return "lost"
         elif (userValue == 21):
-            userBet = userBet + userBet / 2
-            user.cash = user.cash + (userBet)
+            blackJackBet = userBet + userBet / 2
+            user.cash = user.cash + (blackJackBet)
             db.session.commit()
             return "win"
         db.session.commit()
@@ -757,7 +757,6 @@ def handle_player():
     print("connected to game")
     User.query.filter_by(id=user.id).update({'session':request.sid})
     db.session.commit()
-
 
 
 @socketio.on("test")
