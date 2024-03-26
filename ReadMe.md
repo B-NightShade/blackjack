@@ -15,3 +15,6 @@ The players could choose to hit, stay or split their hands (could only split han
 ## Improvements to make
 * current things missing: If a player leaves the game on their turn it does not change the turn to someone else.
 * CSS to improve user interface
+
+### video of project running
+[video](https://youtu.be/Dq3eezC9nlI "blackjack video")
